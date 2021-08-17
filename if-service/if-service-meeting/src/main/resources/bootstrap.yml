@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: meeting-service
+  cloud:
+    nacos:
+      config:
+        server-addr: localhost:8848
+        file-extension: yaml
+        group: IF_GROUP
+        shared-configs[0]:
+          data-id: common-service-dev.yaml
+          group: IF_GROUP
+          refresh: true
+  profiles:
+    active: dev # 环境标识
