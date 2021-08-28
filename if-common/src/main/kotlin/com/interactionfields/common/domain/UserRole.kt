@@ -13,5 +13,5 @@ interface UserRole : Entity<UserRole> {
 
     val id: Int
     var userUUID: String
-    var roleUUID: String
+    var roleID: Int
 }

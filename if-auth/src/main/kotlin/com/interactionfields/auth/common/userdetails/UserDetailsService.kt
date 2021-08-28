@@ -26,6 +26,7 @@ import java.util.*
  */
 @Service
 class UserDetailsService(private val db: Database, private val authServiceRPC: AuthServiceRPC) : UserDetailsService {
+
     private val logger = KotlinLogging.logger {}
 
     /**
@@ -37,7 +38,7 @@ class UserDetailsService(private val db: Database, private val authServiceRPC: A
         return UserDetails().copyFrom(user).apply {
             setAuthorities(db
                 .from(RoleRepository)
-                .leftJoin(UserRoleRepository, on = RoleRepository.uuid eq UserRoleRepository.roleUUID)
+                .leftJoin(UserRoleRepository, on = RoleRepository.id eq UserRoleRepository.roleID)
                 .select(RoleRepository.name)
                 .where(UserRoleRepository.userUUID eq user.uuid)
                 .map { SimpleGrantedAuthority(it[RoleRepository.name]) })
@@ -59,7 +60,7 @@ class UserDetailsService(private val db: Database, private val authServiceRPC: A
         return UserLoginDTO(UserDetailsDTO().copyFrom(user).apply {
             authorities = db
                 .from(RoleRepository)
-                .leftJoin(UserRoleRepository, on = RoleRepository.uuid eq UserRoleRepository.roleUUID)
+                .leftJoin(UserRoleRepository, on = RoleRepository.id eq UserRoleRepository.roleID)
                 .select(RoleRepository.name)
                 .where(UserRoleRepository.userUUID eq user.uuid)
                 .map { it[RoleRepository.name].toString() }

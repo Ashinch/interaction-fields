@@ -15,7 +15,6 @@ import org.ktorm.schema.varchar
  */
 object RoleRepository : Table<Role>("tb_role") {
     val id = int("id").primaryKey().bindTo { it.id }
-    val uuid = varchar("uuid").bindTo { it.uuid }
     val name = varchar("name").bindTo { it.name }
 
     /**

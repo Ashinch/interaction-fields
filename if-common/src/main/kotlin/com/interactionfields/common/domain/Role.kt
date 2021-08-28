@@ -8,8 +8,9 @@ import org.ktorm.entity.Entity
  * @author Ashinch
  * @date 2021/07/22
  */
-interface Role : Domain, Entity<Role> {
+interface Role : Entity<Role> {
     companion object : Entity.Factory<Role>()
 
+    val id: Int
     var name: String
 }

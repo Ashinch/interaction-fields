@@ -8,5 +8,5 @@ package com.interactionfields.common.domain
  */
 interface Domain {
     val id: Int
-    val uuid: String
+    var uuid: String
 }
