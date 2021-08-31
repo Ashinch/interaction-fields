@@ -7,6 +7,7 @@ package com.interactionfields.common.domain
  * @date 2021/07/22
  */
 interface Domain {
+
     val id: Int
     var uuid: String
 }

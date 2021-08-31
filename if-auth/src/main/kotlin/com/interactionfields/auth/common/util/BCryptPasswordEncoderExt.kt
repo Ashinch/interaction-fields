@@ -9,6 +9,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
  * @date 2021/08/20
  */
 object BCryptPasswordEncoderExt {
+
     private val encoder = BCryptPasswordEncoder()
 
     /**

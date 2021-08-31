@@ -16,6 +16,7 @@ import javax.sql.DataSource
  */
 @Configuration
 class KtormConfiguration(var dataSource: DataSource) {
+
     /**
      * Register the [Database] instance as a Spring bean.
      */

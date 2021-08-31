@@ -16,6 +16,7 @@ import java.time.LocalDateTime
 @RestController
 @RequestMapping
 class MeetingController(private val meetingService: MeetingService) {
+
     @PostMapping("/create")
     @PreAuthorize(HasAuthority.USER)
     fun create(): R {

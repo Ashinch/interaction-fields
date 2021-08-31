@@ -15,6 +15,7 @@ import org.ktorm.schema.varchar
  * @date 2021/07/22
  */
 object UserRepository : Table<User>("tb_user") {
+
     val id = int("id").primaryKey().bindTo { it.id }
     val uuid = varchar("uuid").bindTo { it.uuid }
     val username = varchar("username").bindTo { it.username }

@@ -23,7 +23,9 @@ data class R private constructor(
     var msg: String?,
     val data: Any?,
 ) {
+
     companion object {
+
         /**
          * Returns a [R] with [C] or [data] or [Exception].
          */

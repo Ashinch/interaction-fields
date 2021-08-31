@@ -19,6 +19,7 @@ import java.text.SimpleDateFormat
  * @date 2021/07/31
  */
 object JsonExt {
+
     /**
      * Generate default [ObjectMapper].
      */

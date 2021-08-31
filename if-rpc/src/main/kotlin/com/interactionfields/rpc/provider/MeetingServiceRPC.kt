@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping
  */
 @FeignClient(value = "meeting-service", configuration = [FeignClientInterceptor::class])
 interface MeetingServiceRPC {
+
     @PostMapping("/meeting/create")
     fun create(): R
 }

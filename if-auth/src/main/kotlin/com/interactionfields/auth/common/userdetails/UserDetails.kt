@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails
  * @date 2021/08/25
  */
 class UserDetails : UserDetails {
+
     private var id: Int? = null
     private var username: String? = null
     private var password: String? = null

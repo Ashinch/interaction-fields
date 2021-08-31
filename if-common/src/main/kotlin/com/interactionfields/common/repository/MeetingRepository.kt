@@ -15,6 +15,7 @@ import org.ktorm.schema.varchar
  * @date 2021/07/22
  */
 object MeetingRepository : Table<Meeting>("tb_meeting") {
+
     val id = int("id").primaryKey().bindTo { it.id }
     val uuid = varchar("uuid").bindTo { it.uuid }
     val creatorUUID = varchar("creator_uuid").bindTo { it.creatorUUID }

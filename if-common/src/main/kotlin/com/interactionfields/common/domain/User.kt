@@ -10,6 +10,7 @@ import java.time.LocalDateTime
  * @date 2021/07/22
  */
 interface User : Domain, Entity<User> {
+
     companion object : Entity.Factory<User>()
 
     var username: String

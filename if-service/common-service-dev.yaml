@@ -3,19 +3,26 @@ spring:
     url: jdbc:mysql://localhost:3306/interaction_fields?characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
     username: root
     password: 276364092
+  redis:
+    database: 0
+    host: localhost
+    port: 6379
+    password: 276364092
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
   cloud:
     nacos:
       discovery:
         server-addr: localhost:8848
-        sentinel:
-    transport:
-      dashboard: 127.0.0.1:8858
+    sentinel:
+      transport:
+        dashboard: localhost:8858
   zipkin:
     base-url: http://127.0.0.1:9411/
     discoveryClientEnabled: false
   sleuth:
     sampler:
-      probability: 1.0 # 采样百分比
+      probability: 1.0
 feign:
   sentinel:
     enabled: true
@@ -26,5 +33,5 @@ feign:
         read-timeout: 5000
 logging:
   level:
-    root: error
+    root: info
     org.ktorm: debug

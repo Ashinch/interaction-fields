@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletResponse
  */
 
 object WebExt {
+
     /**
      * Returns [HttpServletRequest] object of current session.
      */

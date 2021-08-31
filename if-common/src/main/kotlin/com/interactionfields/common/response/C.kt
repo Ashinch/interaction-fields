@@ -13,6 +13,7 @@ enum class C(
     val code: Int,
     val msg: String,
 ) {
+
     /**
      * Normal
      */

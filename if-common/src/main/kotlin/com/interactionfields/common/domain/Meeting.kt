@@ -10,6 +10,7 @@ import java.time.LocalDateTime
  * @date 2021/07/22
  */
 interface Meeting : Domain, Entity<Meeting> {
+
     companion object : Entity.Factory<Meeting>()
 
     var creatorUUID: String

@@ -9,6 +9,7 @@ import org.springframework.beans.BeanUtils
  * @date 2021/08/18
  */
 object ObjectExt {
+
     /**
      * Create a new instance by [T].
      */

@@ -9,6 +9,7 @@ import org.ktorm.entity.Entity
  * @date 2021/07/22
  */
 interface Role : Entity<Role> {
+
     companion object : Entity.Factory<Role>()
 
     val id: Int

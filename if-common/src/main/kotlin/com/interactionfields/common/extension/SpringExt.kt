@@ -12,11 +12,13 @@ import javax.servlet.http.HttpServletRequest
  * @date 2021/08/18
  */
 class SpringExt : ApplicationContextAware {
+
     override fun setApplicationContext(applicationContext: ApplicationContext) {
         Companion.applicationContext = applicationContext
     }
 
     companion object {
+
         /**
          * Get [ApplicationContext].
          */

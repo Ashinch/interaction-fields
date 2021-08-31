@@ -20,6 +20,7 @@ import org.springframework.util.FileCopyUtils
  */
 @Configuration
 class JWTConfiguration(private val userDetailsService: UserDetailsService) {
+
     @Bean
     @Qualifier("tokenStore")
     fun tokenStore(): TokenStore = JwtTokenStore(jwtTokenEnhancer())

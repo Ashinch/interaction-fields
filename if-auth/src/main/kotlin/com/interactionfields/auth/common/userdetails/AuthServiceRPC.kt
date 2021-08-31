@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam
  */
 @FeignClient("auth-service")
 interface AuthServiceRPC {
+
     @PostMapping("/oauth/token")
     fun getToken(
         @RequestHeader("Authorization") authorization: String,
