@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetails
 class UserDetails : UserDetails {
 
     private var id: Int? = null
+    private var uuid: String? = null
     private var username: String? = null
     private var password: String? = null
     private var enable: Boolean = true
@@ -30,6 +31,12 @@ class UserDetails : UserDetails {
     override fun isCredentialsNonExpired() = true
 
     override fun isEnabled() = enable
+
+    fun getUuid() = this.uuid
+
+    fun setUuid(uuid: String) {
+        this.uuid = uuid
+    }
 
     fun getId() = this.id
 

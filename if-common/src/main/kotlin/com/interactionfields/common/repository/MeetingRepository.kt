@@ -18,6 +18,8 @@ object MeetingRepository : Table<Meeting>("tb_meeting") {
 
     val id = int("id").primaryKey().bindTo { it.id }
     val uuid = varchar("uuid").bindTo { it.uuid }
+    val title = varchar("title").bindTo { it.title }
+    val code = varchar("code").bindTo { it.code }
     val creatorUUID = varchar("creator_uuid").bindTo { it.creatorUUID }
     val createdAt = datetime("created_at").bindTo { it.createdAt }
     val endedAt = datetime("ended_at").bindTo { it.endedAt }

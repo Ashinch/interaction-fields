@@ -13,6 +13,8 @@ interface Meeting : Domain, Entity<Meeting> {
 
     companion object : Entity.Factory<Meeting>()
 
+    var title: String
+    var code: String
     var creatorUUID: String
     var createdAt: LocalDateTime
     var endedAt: LocalDateTime

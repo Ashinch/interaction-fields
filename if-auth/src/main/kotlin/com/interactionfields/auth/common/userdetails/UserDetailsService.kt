@@ -32,7 +32,7 @@ class UserDetailsService(private val db: Database, private val authServiceRPC: A
     /**
      * Load the user by [username].
      */
-    override fun loadUserByUsername(username: String?): org.springframework.security.core.userdetails.UserDetails {
+    override fun loadUserByUsername(username: String?): UserDetails {
         val user = loadUserByUsernameInternal(username)
         // Setting UserDetails authorities
         return UserDetails().copyFrom(user).apply {
@@ -48,7 +48,7 @@ class UserDetailsService(private val db: Database, private val authServiceRPC: A
     /**
      * Login using the [username] and [password].
      */
-    fun login(username: String, password: String): UserLoginDTO {
+    fun login(username: String, password: String): UserLoginVO {
         val user = loadUserByUsernameInternal(username)
         if (!password.matchesBCrypt(user.password)) throw BadCredentialsException(C.BAD_CREDENTIALS.msg)
         // Get the JWT token from the authentication server
@@ -57,7 +57,7 @@ class UserDetailsService(private val db: Database, private val authServiceRPC: A
         val jwt = authServiceRPC.getToken("Basic $base64Secret", "password", username, password)
             ?: throw BadCredentialsException(C.BAD_CREDENTIALS.msg)
         // Setting UserDetailsDTO authorities
-        return UserLoginDTO(UserDetailsDTO().copyFrom(user).apply {
+        return UserLoginVO(UserDetailsDTO().copyFrom(user).apply {
             authorities = db
                 .from(RoleRepository)
                 .leftJoin(UserRoleRepository, on = RoleRepository.id eq UserRoleRepository.roleID)
