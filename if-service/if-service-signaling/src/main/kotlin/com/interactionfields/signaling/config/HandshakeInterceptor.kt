@@ -1,5 +1,13 @@
 package com.interactionfields.signaling.config
 
+import com.interactionfields.auth.common.util.contextAuthPrincipal
+import com.interactionfields.common.repository.MeetingRepository.meetings
+import mu.KotlinLogging
+import org.ktorm.database.Database
+import org.ktorm.dsl.and
+import org.ktorm.dsl.eq
+import org.ktorm.dsl.isNull
+import org.ktorm.entity.find
 import org.springframework.http.server.ServerHttpRequest
 import org.springframework.http.server.ServerHttpResponse
 import org.springframework.http.server.ServletServerHttpRequest
@@ -14,7 +22,9 @@ import org.springframework.web.socket.server.HandshakeInterceptor
  * @date 2021/08/31
  */
 @Component
-class HandshakeInterceptor : HandshakeInterceptor {
+class HandshakeInterceptor(private val db: Database) : HandshakeInterceptor {
+
+    private val logger = KotlinLogging.logger {}
 
     /**
      * If false is returned before handshake, the link is not established.
@@ -23,18 +33,14 @@ class HandshakeInterceptor : HandshakeInterceptor {
         request: ServerHttpRequest, response: ServerHttpResponse,
         wsHandler: WebSocketHandler, attributes: MutableMap<String, Any>
     ): Boolean {
-        //将用户id放入socket处理器的会话(WebSocketSession)中
         val serverHttpRequest = request as ServletServerHttpRequest
-        //获取参数
-        val meetingId = serverHttpRequest.servletRequest.getParameter("meetingId")
-        attributes["meetingId"] = meetingId
-        //可以在此处进行权限验证，当用户权限验证通过后，进行握手成功操作，验证失败返回false
-        if (meetingId == "123") {
-            println("握手失败.....")
-            return false
-        }
-        println("开始握手。。。。。。。")
-        return true
+        val code = serverHttpRequest.servletRequest.getParameter("code")
+        val uuid = contextAuthPrincipal.getUuid()!!
+        attributes["code"] = code
+        attributes["uuid"] = uuid
+        // Verify the invitation code
+        return (db.meetings.find { (it.code eq code).and(it.endedAt.isNull()) } != null)
+            .also { logger.info { "$uuid: Handshake $code meeting is $it" } }
     }
 
     /**
@@ -44,6 +50,6 @@ class HandshakeInterceptor : HandshakeInterceptor {
         request: ServerHttpRequest, response: ServerHttpResponse,
         wsHandler: WebSocketHandler, exception: Exception?
     ) {
-        println("握手成功啦。。。。。。")
+//        println("握手成功啦。。。。。。")
     }
 }

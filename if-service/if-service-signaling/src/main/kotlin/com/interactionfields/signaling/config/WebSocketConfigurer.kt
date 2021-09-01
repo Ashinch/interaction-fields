@@ -21,11 +21,8 @@ class WebSocketConfigurer(private val handshakeInterceptor: HandshakeInterceptor
      */
     override fun registerWebSocketHandlers(webSocketHandlerRegistry: WebSocketHandlerRegistry) {
         webSocketHandlerRegistry
-            //添加myHandler消息处理对象，和websocket访问地址
-            .addHandler(WebSocketHandler(), "/games")
-            //设置允许跨域访问
+            .addHandler(WebSocketHandler(), "/webrtc")
             .setAllowedOrigins("*")
-            //添加拦截器可实现用户链接前进行权限校验等操作
             .addInterceptors(handshakeInterceptor)
     }
 }

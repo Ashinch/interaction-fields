@@ -5,7 +5,7 @@ import com.interactionfields.common.extension.ObjectExt.copyFrom
 import com.interactionfields.common.extension.uuid6U
 import com.interactionfields.common.repository.MeetingRepository.meetings
 import com.interactionfields.meeting.model.dto.CreateMeetingDTO
-import com.interactionfields.meeting.model.vo.CreateMeetingVO
+import com.interactionfields.meeting.model.vo.MeetingVO
 import org.ktorm.database.Database
 import org.ktorm.dsl.and
 import org.ktorm.dsl.eq
@@ -24,7 +24,7 @@ class MeetingService(private val db: Database) {
     /**
      * Create a meeting and return the invitation code.
      */
-    fun create(createMeetingDTO: CreateMeetingDTO): CreateMeetingVO {
+    fun create(createMeetingDTO: CreateMeetingDTO): MeetingVO {
         // Ensure that the user has no ongoing meetings
         Assert.isNull(
             db.meetings.find { (it.creatorUUID eq createMeetingDTO.creatorUUID).and(it.endedAt.isNull()) },
@@ -37,9 +37,16 @@ class MeetingService(private val db: Database) {
             creatorUUID = createMeetingDTO.creatorUUID
             createdAt = LocalDateTime.now()
         }
-        Assert.isTrue(db.meetings.add(meeting) > 0, "create meeting error")
-        return CreateMeetingVO().copyFrom(meeting)
+        Assert.isTrue(db.meetings.add(meeting) > 0, "Create meeting error")
+        return MeetingVO().copyFrom(meeting)
     }
+
+    fun codeStatus(code: String): MeetingVO {
+        val meeting = db.meetings.find { (it.code eq code).and(it.endedAt.isNull()) }
+        Assert.notNull(meeting, "Meeting code: $code is does not exist")
+        return MeetingVO().copyFrom(meeting!!)
+    }
+
 
     /**
      * Generated a 6-digit meeting invitation code. Invitation codes cannot

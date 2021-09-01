@@ -4,7 +4,7 @@ import com.interactionfields.auth.common.userdetails.UserDetailsService
 import com.interactionfields.common.domain.User
 import com.interactionfields.common.extension.ObjectExt.copyFrom
 import com.interactionfields.common.response.R
-import com.interactionfields.user.model.param.UserSignUpParam
+import com.interactionfields.user.model.param.UserParam
 import com.interactionfields.user.service.UserService
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.PostMapping
@@ -19,10 +19,10 @@ class UserController(
 ) {
 
     @PostMapping("/login")
-    fun login(@Valid userParam: UserSignUpParam): R =
+    fun login(@Valid userParam: UserParam): R =
         R.judge(userDetailsService.login(userParam.username, userParam.password))
 
     @PostMapping("/signUp")
-    fun signUp(@Valid userParam: UserSignUpParam): R =
-        R.judge(userService.signUp(User().copyFrom(userParam)))
+    fun signUp(@Valid userParam: UserParam): R =
+        R.success(userService.signUp(User().copyFrom(userParam)))
 }

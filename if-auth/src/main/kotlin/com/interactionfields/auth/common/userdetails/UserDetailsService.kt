@@ -52,7 +52,7 @@ class UserDetailsService(private val db: Database, private val authServiceRPC: A
         val user = loadUserByUsernameInternal(username)
         if (!password.matchesBCrypt(user.password)) throw BadCredentialsException(C.BAD_CREDENTIALS.msg)
         // Get the JWT token from the authentication server
-        val serviceId = "user-service:276364092"
+        val serviceId = "client:276364092"
         val base64Secret = Base64.getEncoder().encodeToString(serviceId.toByteArray())
         val jwt = authServiceRPC.getToken("Basic $base64Secret", "password", username, password)
             ?: throw BadCredentialsException(C.BAD_CREDENTIALS.msg)

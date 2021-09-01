@@ -9,6 +9,8 @@ import com.interactionfields.common.repository.UserRoleRepository.userRoles
 import org.ktorm.database.Database
 import org.ktorm.entity.add
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import org.springframework.util.Assert
 import java.time.LocalDateTime
 import java.util.*
 
@@ -18,13 +20,18 @@ class UserService(private val db: Database) {
     /**
      * Create a [user] and assign roles.
      */
-    fun signUp(user: User): Boolean = db.users.add(user.apply {
-        uuid = UUID.randomUUID().toString()
-        password = password.encodeBCrypt()
-        joinedAt = LocalDateTime.now()
-        loggedAt = joinedAt
-    }) > 0 && db.userRoles.add(UserRole().apply {
-        userUUID = user.uuid
-        roleID = RolesID.USER
-    }) > 0
+    @Transactional(rollbackFor = [Exception::class])
+    fun signUp(user: User) {
+        Assert.isTrue(db.users.add(user.apply {
+            uuid = UUID.randomUUID().toString()
+            password = password.encodeBCrypt()
+            joinedAt = LocalDateTime.now()
+            loggedAt = joinedAt
+        }) > 0, "failed to add a user")
+
+        Assert.isTrue(db.userRoles.add(UserRole().apply {
+            userUUID = user.uuid
+            roleID = RolesID.USER
+        }) > 0, "failed to assign role")
+    }
 }

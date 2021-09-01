@@ -8,9 +8,7 @@ import com.interactionfields.meeting.model.param.CreateMeetingParam
 import com.interactionfields.meeting.service.MeetingService
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 @Validated
 @RestController
@@ -25,6 +23,12 @@ class MeetingController(private val meetingService: MeetingService) {
             contextAuthPrincipal.getUuid()!!
         )
         return R.judge(meetingService.create(createMeetingDTO))
+    }
+
+    @GetMapping("/codeStatus/{code}")
+    @PreAuthorize(HasAuthority.USER)
+    fun codeStatus(@PathVariable code: String): R {
+        return R.judge(meetingService.codeStatus(code))
     }
 
     @PostMapping("/join")

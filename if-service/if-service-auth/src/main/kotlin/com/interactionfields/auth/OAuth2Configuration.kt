@@ -30,17 +30,12 @@ class OAuth2Configuration(
 
     override fun configure(clients: ClientDetailsServiceConfigurer) {
         clients.inMemory()
-            .withClient("user-service")
+            .withClient("client")
             .secret("276364092".encodeBCrypt())
             .scopes("service")
             .authorizedGrantTypes("refresh_token", "password")
-            .accessTokenValiditySeconds(3600 * 1000)
-            .and()
-            .withClient("meeting-service")
-            .secret("276364092".encodeBCrypt())
-            .scopes("service")
-            .authorizedGrantTypes("refresh_token", "password")
-            .accessTokenValiditySeconds(3600 * 1000)
+            .accessTokenValiditySeconds(60 * 60 * 24)
+            .refreshTokenValiditySeconds(60 * 60 * 24 * 7)
     }
 
     override fun configure(endpoints: AuthorizationServerEndpointsConfigurer) {

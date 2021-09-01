@@ -20,6 +20,7 @@ class ResourceServerConfiguration(private val tokenStore: TokenStore) : Resource
     override fun configure(http: HttpSecurity) {
         http.csrf().disable()
             .authorizeRequests()
+            .antMatchers("/webrtc").authenticated()
             .anyRequest().permitAll()
     }
 
