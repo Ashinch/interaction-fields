@@ -1,11 +1,15 @@
 package com.interactionfields.meeting.service
 
+import com.alibaba.cloud.nacos.NacosDiscoveryProperties
+import com.alibaba.cloud.nacos.NacosServiceManager
 import com.interactionfields.common.domain.Meeting
 import com.interactionfields.common.extension.ObjectExt.copyFrom
 import com.interactionfields.common.extension.uuid6U
 import com.interactionfields.common.repository.MeetingRepository.meetings
 import com.interactionfields.meeting.model.dto.CreateMeetingDTO
+import com.interactionfields.meeting.model.vo.MeetingStatusVO
 import com.interactionfields.meeting.model.vo.MeetingVO
+import mu.KotlinLogging
 import org.ktorm.database.Database
 import org.ktorm.dsl.and
 import org.ktorm.dsl.eq
@@ -16,10 +20,16 @@ import org.springframework.stereotype.Service
 import org.springframework.util.Assert
 import java.time.LocalDateTime
 import java.util.*
+import javax.tools.JavaCompiler
 
 @Service
 //@Transactional(rollbackFor = [Exception::class])
-class MeetingService(private val db: Database) {
+class MeetingService(
+    private val db: Database,
+    private val nacosServiceManager: NacosServiceManager,
+    private val nacosDiscoveryProperties: NacosDiscoveryProperties
+) {
+    private val logger = KotlinLogging.logger {}
 
     /**
      * Create a meeting and return the invitation code.
@@ -41,10 +51,17 @@ class MeetingService(private val db: Database) {
         return MeetingVO().copyFrom(meeting)
     }
 
-    fun codeStatus(code: String): MeetingVO {
+    fun codeStatus(code: String): MeetingStatusVO {
+        val instances = nacosServiceManager
+            .getNamingService(nacosDiscoveryProperties.nacosProperties)
+            .selectInstances("signaling-service", true)[0]
+        Assert.isTrue(!instances?.ip.isNullOrEmpty(), "Signaling-service is not found")
         val meeting = db.meetings.find { (it.code eq code).and(it.endedAt.isNull()) }
         Assert.notNull(meeting, "Meeting code: $code is does not exist")
-        return MeetingVO().copyFrom(meeting!!)
+        return MeetingStatusVO().copyFrom(meeting!!).apply {
+            ip = instances.ip
+            port = instances.port
+        }
     }
 
 
