@@ -1,5 +1,6 @@
 package com.interactionfields.auth
 
+import com.interactionfields.auth.common.userdetails.UserDetailsService
 import com.interactionfields.auth.common.util.BCryptPasswordEncoderExt.encodeBCrypt
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
@@ -26,6 +27,7 @@ import org.springframework.security.oauth2.provider.token.store.KeyStoreKeyFacto
 class OAuth2Configuration(
     @Qualifier("authenticationManagerBean")
     private val authenticationManager: AuthenticationManager,
+    private val userDetailsService: UserDetailsService,
 ) : AuthorizationServerConfigurerAdapter() {
 
     override fun configure(clients: ClientDetailsServiceConfigurer) {
@@ -42,6 +44,7 @@ class OAuth2Configuration(
         endpoints.tokenStore(tokenStore())
             .tokenEnhancer(jwtTokenEnhancer())
             .authenticationManager(authenticationManager)
+            .userDetailsService(userDetailsService)
     }
 
     /**

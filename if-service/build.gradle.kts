@@ -60,7 +60,7 @@ subprojects {
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         kotlinOptions {
             freeCompilerArgs = listOf("-Xjsr305=strict")
-            jvmTarget = "11"
+            jvmTarget = "1.8"
         }
     }
 
@@ -69,7 +69,7 @@ subprojects {
     }
 
     tasks.withType<org.springframework.boot.gradle.tasks.bundling.BootJar> {
-        enabled = false
+        enabled = true
     }
     tasks.withType<Jar> {
         enabled = true
