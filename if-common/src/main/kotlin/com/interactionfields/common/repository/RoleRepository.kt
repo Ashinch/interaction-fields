@@ -22,5 +22,4 @@ object RoleRepository : Table<Role>("tb_role") {
      * Return a default entity sequence of [RoleRepository].
      */
     val Database.roles get() = this.sequenceOf(RoleRepository)
-//    val userRole get() = uuid.referenceTable as UserRoleRepository
 }

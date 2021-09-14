@@ -39,7 +39,7 @@ class HandshakeInterceptor(private val db: Database) : HandshakeInterceptor {
         attributes["code"] = code
         attributes["uuid"] = uuid
         // Verify the invitation code
-        return (db.meetings.find { (it.code eq code).and(it.endedAt.isNull()) } != null)
+        return (db.meetings.find { (it.code eq code).and(it.endAt.isNull()) } != null)
             .also { logger.info { "$uuid: Handshake $code meeting is $it" } }
     }
 

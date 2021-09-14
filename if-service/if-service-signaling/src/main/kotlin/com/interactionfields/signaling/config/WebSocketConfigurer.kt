@@ -1,6 +1,6 @@
 package com.interactionfields.signaling.config
 
-import com.interactionfields.signaling.socket.WebSocketHandler
+import com.interactionfields.signaling.socket.WebRTCHandler
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.socket.config.annotation.EnableWebSocket
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer
@@ -17,11 +17,11 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 class WebSocketConfigurer(private val handshakeInterceptor: HandshakeInterceptor) : WebSocketConfigurer {
 
     /**
-     * Register Web socket handlers.
+     * Register WebSocket handlers.
      */
     override fun registerWebSocketHandlers(webSocketHandlerRegistry: WebSocketHandlerRegistry) {
         webSocketHandlerRegistry
-            .addHandler(WebSocketHandler(), "/webrtc")
+            .addHandler(WebRTCHandler(), "/webrtc")
             .setAllowedOrigins("*")
             .addInterceptors(handshakeInterceptor)
     }

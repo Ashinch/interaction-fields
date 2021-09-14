@@ -17,3 +17,6 @@ findProject(":if-service:if-service-user")?.name = "if-service-user"
 
 include("if-service:if-service-signaling")
 findProject(":if-service:if-service-signaling")?.name = "if-service-signaling"
+
+include("if-service:if-service-judge")
+findProject(":if-service:if-service-judge")?.name = "if-service-judge"

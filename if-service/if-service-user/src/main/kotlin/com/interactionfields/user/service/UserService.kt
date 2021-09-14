@@ -25,8 +25,8 @@ class UserService(private val db: Database) {
         Assert.isTrue(db.users.add(user.apply {
             uuid = UUID.randomUUID().toString()
             password = password.encodeBCrypt()
-            joinedAt = LocalDateTime.now()
-            loggedAt = joinedAt
+            joinAt = LocalDateTime.now()
+            signUpAt = joinAt
         }) > 0, "failed to add a user")
 
         Assert.isTrue(db.userRoles.add(UserRole().apply {

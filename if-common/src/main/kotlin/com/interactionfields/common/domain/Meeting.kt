@@ -16,6 +16,6 @@ interface Meeting : Domain, Entity<Meeting> {
     var title: String
     var code: String
     var creatorUUID: String
-    var createdAt: LocalDateTime
-    var endedAt: LocalDateTime
+    var createAt: LocalDateTime
+    var endAt: LocalDateTime
 }

@@ -6,6 +6,6 @@ data class UserVo(
     var username: String,
     var mobile: String?,
     var email: String?,
-    var joinedAt: LocalDateTime,
-    var loggedAt: LocalDateTime,
+    var joinAt: LocalDateTime,
+    var signUpAt: LocalDateTime,
 )

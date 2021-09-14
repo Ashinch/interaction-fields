@@ -7,7 +7,7 @@ data class MeetingStatusVO(
     var title: String? = null,
     var code: String? = null,
     var creatorUUID: String? = null,
-    var createdAt: LocalDateTime? = null,
+    var createAt: LocalDateTime? = null,
     var ip: String? = null,
     var port: Int? = null,
 )

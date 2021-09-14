@@ -17,6 +17,6 @@ interface User : Domain, Entity<User> {
     var mobile: String
     var email: String
     var password: String
-    var joinedAt: LocalDateTime
-    var loggedAt: LocalDateTime
+    var joinAt: LocalDateTime
+    var signUpAt: LocalDateTime
 }

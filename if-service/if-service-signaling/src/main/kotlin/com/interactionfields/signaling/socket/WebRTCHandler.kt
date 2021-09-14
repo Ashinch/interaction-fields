@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * @author Ashinch
  * @date 2021/08/31
  */
-class WebSocketHandler : TextWebSocketHandler() {
+class WebRTCHandler : TextWebSocketHandler() {
 
     private val logger = KotlinLogging.logger {}
 

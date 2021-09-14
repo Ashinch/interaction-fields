@@ -7,5 +7,5 @@ data class MeetingVO(
     var title: String? = null,
     var code: String? = null,
     var creatorUUID: String? = null,
-    var createdAt: LocalDateTime? = null
+    var createAt: LocalDateTime? = null
 )

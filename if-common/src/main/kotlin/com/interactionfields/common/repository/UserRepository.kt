@@ -22,8 +22,8 @@ object UserRepository : Table<User>("tb_user") {
     val mobile = varchar("mobile").bindTo { it.mobile }
     val email = varchar("email").bindTo { it.email }
     val password = varchar("password").bindTo { it.password }
-    val joinedAt = datetime("joined_at").bindTo { it.joinedAt }
-    val loggedAt = datetime("logged_at").bindTo { it.loggedAt }
+    val joinedAt = datetime("join_at").bindTo { it.joinAt }
+    val signUpAt = datetime("sign_up_at").bindTo { it.signUpAt }
 
     /**
      * Return a default entity sequence of [UserRepository].
