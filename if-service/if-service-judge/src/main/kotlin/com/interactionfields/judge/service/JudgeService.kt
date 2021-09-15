@@ -2,60 +2,48 @@ package com.interactionfields.judge.service
 
 import com.interactionfields.common.domain.Attachment
 import com.interactionfields.common.extension.uuid36
+import com.interactionfields.common.mq.RabbitMQExchanges
+import com.interactionfields.common.mq.RabbitMQExt.defaultConvertAndSend
+import com.interactionfields.common.mq.RabbitMQRoutingKeys
 import com.interactionfields.common.repository.AttachmentRepository.attachments
+import com.interactionfields.common.repository.MeetingRepository.meetings
 import mu.KotlinLogging
 import org.ktorm.database.Database
+import org.ktorm.dsl.eq
 import org.ktorm.entity.add
+import org.ktorm.entity.find
+import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.stereotype.Service
-import java.io.BufferedReader
-import java.io.File
-import java.io.InputStreamReader
 import java.time.LocalDateTime
 
 @Service
-class JudgeService(private val db: Database) {
+class JudgeService(
+    private val db: Database,
+    private val rabbitTemplate: RabbitTemplate
+) {
 
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Create a meeting and return the invitation code.
+     * Add an attachment and send it to
+     * the [RabbitMQRoutingKeys.MEETING_JUDGE_COMMIT] consumer.
      */
-    fun exec(code: String): String? {
-        db.attachments.add(Attachment().apply {
+    fun commit(binary: String, meetingUUID: String): Boolean {
+        val code = db.meetings.find { it.uuid eq meetingUUID }!!.code
+        val attachment = Attachment().apply {
             uuid = uuid36
-            meetingUUID = uuid36
-            binary = code.toByteArray()
+            this.meetingUUID = meetingUUID
+            this.binary = binary.toByteArray()
             type = 1
             createAt = LocalDateTime.now()
-        })
-        File("/Users/ash/Desktop/1.java").writeBytes(code.toByteArray())
-        var process: Process? = null
-        var result: String? = null
-        try {
-            process = Runtime.getRuntime().exec("javac /Users/ash/Desktop/1.java")
-            result = BufferedReader(InputStreamReader(process!!.inputStream)).useLines { lines ->
-                val results = StringBuilder()
-                lines.forEach { results.append(it) }
-                results.toString()
-            }
-
-            if (result.isNotEmpty()) {
-                return result
-            }
-
-            process = Runtime.getRuntime().exec("java /Users/ash/Desktop/1.java")
-            result = BufferedReader(InputStreamReader(process!!.inputStream)).useLines { lines ->
-                val results = StringBuilder()
-                lines.forEach { results.append(it) }
-                results.toString()
-            }
-
-            if (process!!.waitFor() != 0) {
-                println("error")
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
         }
-        return result
+        if (db.attachments.add(attachment) <= 0) return false
+        rabbitTemplate.defaultConvertAndSend(
+            RabbitMQExchanges.JUDGE,
+            RabbitMQRoutingKeys.MEETING_JUDGE_COMMIT,
+            attachment,
+            mapOf("code" to code)
+        )
+        return true
     }
 }

@@ -18,7 +18,7 @@ enum class C(
      * Normal
      */
     SUCCESS(200, "Success"),
-    ERROR(500, "Failure"),
+    FAILURE(500, "Failure"),
     BAD_REQUEST(400, "Bad Request"),
 
     /**

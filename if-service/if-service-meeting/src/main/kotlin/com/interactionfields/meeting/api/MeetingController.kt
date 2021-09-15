@@ -25,10 +25,10 @@ class MeetingController(private val meetingService: MeetingService) {
         return R.judge(meetingService.create(createMeetingDTO))
     }
 
-    @GetMapping("/codeStatus/{code}")
+    @GetMapping("/statusByCode/{code}")
     @PreAuthorize(HasAuthority.USER)
     fun codeStatus(@PathVariable code: String): R {
-        return R.judge(meetingService.codeStatus(code))
+        return R.judge(meetingService.getStatusByCode(code))
     }
 
     @PostMapping("/join")

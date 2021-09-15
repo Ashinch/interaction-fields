@@ -40,7 +40,6 @@ class WebRTCHandler : TextWebSocketHandler() {
         sessionPools[session.attributes["code"]]!!.add(session)
         addOnlineCount()
         logger.info { "${session.attributes["uuid"]}: Connect ${session.attributes["code"]} meeting, the current number is $onlineNum" }
-//        session.sendMessage(TextMessage("欢迎连接到ws服务! 当前人数为：$onlineNum".toJson()))
     }
 
     override fun afterConnectionClosed(session: WebSocketSession, closeStatus: CloseStatus) {
@@ -51,12 +50,19 @@ class WebRTCHandler : TextWebSocketHandler() {
 
     companion object {
 
-        //静态变量，用来记录当前在线连接数。应该把它设计成线程安全的。
+        // 静态变量，用来记录当前在线连接数。应该把它设计成线程安全的。
         private val onlineNum = AtomicInteger()
 
-        //concurrent包的线程安全Set，用来存放每个客户端对应的WebSocketServer对象。
-        private val sessionPools: ConcurrentHashMap<String, CopyOnWriteArrayList<WebSocketSession>> =
-            ConcurrentHashMap()
+        // concurrent包的线程安全Set，用来存放每个客户端对应的WebSocketServer对象。
+        private val sessionPools = ConcurrentHashMap<String, CopyOnWriteArrayList<WebSocketSession>>()
+
+        /**
+         * Broadcasts a [message] to the [code] meeting.
+         */
+        fun sendMessage(code: String, message: WebSocketMessage<*>) {
+            println("Broadcast meeting: $code, messages: ${message.payload}")
+            sessionPools[code]?.forEach { it.sendMessage(message) }
+        }
 
         /**
          * 添加链接人数

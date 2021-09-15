@@ -1,7 +1,7 @@
 package com.interactionfields.auth.common.util
 
 /**
- * The constant of authentication.
+ * The constants of authentication.
  *
  * @author Ashinch
  * @date 2021/08/25

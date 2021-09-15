@@ -17,6 +17,9 @@ repositories {
 dependencies {
 //    api("io.pivotal.spring.cloud:spring-cloud-services-dependencies:Hoxton.SR9")
 
+    // Rabbit MQ
+    api("org.springframework.boot:spring-boot-starter-amqp")
+
     // Ktorm
     api("org.ktorm:ktorm-core:3.4.1")
     api("org.ktorm:ktorm-jackson:3.4.1")

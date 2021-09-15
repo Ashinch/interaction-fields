@@ -30,7 +30,7 @@ data class R private constructor(
          * Returns a [R] with [C] or [data] or [Exception].
          */
         fun with(c: C?, data: Any? = null, e: Exception? = null): R {
-            e?.let { return R(C.ERROR.code, e.message, data) }
+            e?.let { return R(C.FAILURE.code, e.message, data) }
             return R(c?.code, c?.msg, data)
         }
 
@@ -43,7 +43,7 @@ data class R private constructor(
          * Returns a failure [R].
          */
         fun failure(msg: String? = null, data: Any? = null): R {
-            return with(C.ERROR, data).also { it.msg = msg ?: it.msg }
+            return with(C.FAILURE, data).also { it.msg = msg ?: it.msg }
         }
 
         /**

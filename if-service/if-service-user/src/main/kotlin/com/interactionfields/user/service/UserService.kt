@@ -1,9 +1,9 @@
 package com.interactionfields.user.service
 
 import com.interactionfields.auth.common.util.BCryptPasswordEncoderExt.encodeBCrypt
-import com.interactionfields.auth.common.util.RolesID
 import com.interactionfields.common.domain.User
 import com.interactionfields.common.domain.UserRole
+import com.interactionfields.common.repository.RoleRepository
 import com.interactionfields.common.repository.UserRepository.users
 import com.interactionfields.common.repository.UserRoleRepository.userRoles
 import org.ktorm.database.Database
@@ -31,7 +31,7 @@ class UserService(private val db: Database) {
 
         Assert.isTrue(db.userRoles.add(UserRole().apply {
             userUUID = user.uuid
-            roleID = RolesID.USER
+            roleID = RoleRepository.IDEnum.USER
         }) > 0, "failed to assign role")
     }
 }

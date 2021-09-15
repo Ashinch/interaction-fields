@@ -26,8 +26,9 @@ import java.util.*
 class MeetingService(
     private val db: Database,
     private val nacosServiceManager: NacosServiceManager,
-    private val nacosDiscoveryProperties: NacosDiscoveryProperties
+    private val nacosDiscoveryProperties: NacosDiscoveryProperties,
 ) {
+
     private val logger = KotlinLogging.logger {}
 
     /**
@@ -50,7 +51,11 @@ class MeetingService(
         return MeetingVO().copyFrom(meeting)
     }
 
-    fun codeStatus(code: String): MeetingStatusVO {
+    /**
+     * Get the meeting status, signaling server IP address,
+     * and port by using the meeting invitation [code].
+     */
+    fun getStatusByCode(code: String): MeetingStatusVO {
         val instances = nacosServiceManager
             .getNamingService(nacosDiscoveryProperties.nacosProperties)
             .selectInstances("signaling-service", true)[0]
@@ -63,10 +68,9 @@ class MeetingService(
         }
     }
 
-
     /**
-     * Generated a 6-digit meeting invitation code. Invitation codes cannot
-     * be the same as those for an ongoing meeting.
+     * Generated a 6-digit meeting invitation code. Invitation
+     * codes cannot be the same as those for an ongoing meeting.
      */
     private fun generateInviteCode(): String {
         // Try up to five times
