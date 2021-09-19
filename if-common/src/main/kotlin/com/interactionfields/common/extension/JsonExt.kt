@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator
 import com.interactionfields.common.extension.DateTimeExt.YYYY_MM_DD_HH_MM_SS
+import org.ktorm.jackson.KtormModule
 import java.io.InputStream
 import java.text.SimpleDateFormat
 
@@ -24,21 +25,22 @@ object JsonExt {
      * Generate default [ObjectMapper].
      */
     val defaultMapper = ObjectMapper().apply {
-        this.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-        this.dateFormat = SimpleDateFormat(YYYY_MM_DD_HH_MM_SS)
+        registerModule(KtormModule())
+        configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        dateFormat = SimpleDateFormat(YYYY_MM_DD_HH_MM_SS)
     }
 
     /**
      * Generate complete serialization [ObjectMapper].
      */
     val completeMapper = ObjectMapper().apply {
-        this.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY)
-        this.activateDefaultTyping(
+        setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY)
+        activateDefaultTyping(
             LaissezFaireSubTypeValidator.instance,
             ObjectMapper.DefaultTyping.NON_FINAL,
             JsonTypeInfo.As.PROPERTY
         )
-        this.dateFormat = SimpleDateFormat(YYYY_MM_DD_HH_MM_SS)
+        dateFormat = SimpleDateFormat(YYYY_MM_DD_HH_MM_SS)
     }
 
     /**

@@ -1,8 +1,6 @@
 package com.interactionfields.common.repository
 
-import com.interactionfields.common.domain.AttachmentStatus
 import com.interactionfields.common.domain.AttachmentType
-import com.interactionfields.common.domain.Role
 import org.ktorm.database.Database
 import org.ktorm.entity.sequenceOf
 import org.ktorm.schema.Table
@@ -24,4 +22,13 @@ object AttachmentTypeRepository : Table<AttachmentType>("dict_attachment_type") 
      * Return a default entity sequence of [AttachmentTypeRepository].
      */
     val Database.attachmentType get() = this.sequenceOf(AttachmentTypeRepository)
+
+    object Enum {
+
+        const val LANGUAGE_JAVA = 1
+        const val LANGUAGE_CPP = 2
+        const val LANGUAGE_CLANG = 3
+        const val LANGUAGE_JAVASCRIPT = 4
+        const val LANGUAGE_PYTHON = 5
+    }
 }

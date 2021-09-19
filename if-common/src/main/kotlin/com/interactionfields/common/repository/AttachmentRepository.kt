@@ -17,9 +17,11 @@ object AttachmentRepository : Table<Attachment>("tb_attachment") {
     val uuid = varchar("uuid").bindTo { it.uuid }
     val meetingUUID = varchar("meeting_uuid").bindTo { it.meetingUUID }
     val binary = blob("binary").bindTo { it.binary }
-    val type = int("type").bindTo { it.type }
+    val typeID = int("type_id").references(AttachmentTypeRepository) { it.type }
     val result = blob("result").bindTo { it.result }
-    val status = int("status").bindTo { it.status }
+
+    //    val status = int("status").bindTo { it.status }
+    val statusID = int("status_id").references(AttachmentStatusRepository) { it.status }
     val createAt = datetime("create_at").bindTo { it.createAt }
     val endAt = datetime("end_at").bindTo { it.endAt }
 
@@ -27,12 +29,4 @@ object AttachmentRepository : Table<Attachment>("tb_attachment") {
      * Return a default entity sequence of [AttachmentRepository].
      */
     val Database.attachments get() = this.sequenceOf(AttachmentRepository)
-
-    object StatusEnum {
-
-        const val SUCCESS = 1
-        const val FAILURE = 2
-        const val TIMEOUT = 3
-        const val OUT_OF_SPACE = 4
-    }
 }

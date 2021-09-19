@@ -12,6 +12,6 @@ interface AttachmentType : Entity<AttachmentType> {
 
     companion object : Entity.Factory<AttachmentType>()
 
-    val id: Int
+    var id: Int
     var name: String
 }

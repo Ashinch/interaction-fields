@@ -7,6 +7,7 @@ import com.interactionfields.common.mq.RabbitMQQueues
 import com.interactionfields.common.mq.RabbitMQRoutingKeys
 import com.interactionfields.signaling.model.Signaling
 import com.interactionfields.signaling.socket.WebRTCHandler
+import com.interactionfields.signaling.util.SignalingFactory
 import com.rabbitmq.client.Channel
 import mu.KotlinLogging
 import org.springframework.amqp.core.ExchangeTypes
@@ -42,7 +43,7 @@ class JudgeResultListener {
         logger.info { "Messages are received: $msg" }
         WebRTCHandler.sendMessage(
             msg.headers["code"].toString(),
-            TextMessage(Signaling.createJudgeResultReceive(msg.payload).toJson())
+            TextMessage(SignalingFactory.create(SignalingFactory.JUDGE_RESULT_RECEIVE, msg.payload).toJson())
         )
         channel.defaultAck(msg)
     }

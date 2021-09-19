@@ -10,7 +10,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * Signaling server of WebRTC.
+ * BroadcastController server of WebRTC.
  *
  * @author Ashinch
  * @date 2021/08/31

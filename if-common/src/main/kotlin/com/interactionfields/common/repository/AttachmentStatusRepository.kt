@@ -23,4 +23,12 @@ object AttachmentStatusRepository : Table<AttachmentStatus>("dict_attachment_sta
      * Return a default entity sequence of [AttachmentStatusRepository].
      */
     val Database.attachmentStatus get() = this.sequenceOf(AttachmentStatusRepository)
+
+    object Enum {
+
+        const val SUCCESS = 1
+        const val FAILURE = 2
+        const val TIMEOUT = 3
+        const val OUT_OF_SPACE = 4
+    }
 }

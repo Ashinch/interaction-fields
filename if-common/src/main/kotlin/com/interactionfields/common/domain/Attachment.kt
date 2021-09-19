@@ -15,9 +15,9 @@ interface Attachment : Domain, Entity<Attachment> {
 
     var meetingUUID: String
     var binary: ByteArray
-    var type: Int
+    var type: AttachmentType
     var result: ByteArray
-    var status: Int
+    var status: AttachmentStatus
     var createAt: LocalDateTime
     var endAt: LocalDateTime
 }
