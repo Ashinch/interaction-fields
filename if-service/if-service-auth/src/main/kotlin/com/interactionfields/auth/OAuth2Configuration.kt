@@ -59,8 +59,8 @@ class OAuth2Configuration(
     @Bean
     protected fun jwtTokenEnhancer(): JwtAccessTokenConverter {
         return JwtAccessTokenConverter().apply {
-            val factory = KeyStoreKeyFactory(ClassPathResource("oauth2-jwt.jks"), "276364092".toCharArray())
-            setKeyPair(factory.getKeyPair("oauth2-jwt", "276364092".toCharArray()))
+            val factory = KeyStoreKeyFactory(ClassPathResource("ca.jks"), "@Ash1nch".toCharArray())
+            setKeyPair(factory.getKeyPair("1", "@Ash1nch".toCharArray()))
         }
     }
 }
