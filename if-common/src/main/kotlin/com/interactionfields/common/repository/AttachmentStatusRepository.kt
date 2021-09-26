@@ -1,7 +1,6 @@
 package com.interactionfields.common.repository
 
 import com.interactionfields.common.domain.AttachmentStatus
-import com.interactionfields.common.domain.Role
 import org.ktorm.database.Database
 import org.ktorm.entity.sequenceOf
 import org.ktorm.schema.Table

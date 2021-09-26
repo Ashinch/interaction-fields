@@ -3,14 +3,15 @@ package com.interactionfields.auth.common.userdetails
 import com.interactionfields.auth.common.util.BCryptPasswordEncoderExt.matchesBCrypt
 import com.interactionfields.common.domain.User
 import com.interactionfields.common.extension.ObjectExt.copyFrom
-import com.interactionfields.common.repository.RoleRepository
 import com.interactionfields.common.repository.UserRepository.users
-import com.interactionfields.common.repository.UserRoleRepository
+import com.interactionfields.common.repository.UserRoleRepository.userRoles
 import com.interactionfields.common.response.C
 import mu.KotlinLogging
 import org.ktorm.database.Database
-import org.ktorm.dsl.*
+import org.ktorm.dsl.eq
+import org.ktorm.entity.filter
 import org.ktorm.entity.find
+import org.ktorm.entity.map
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetailsService
@@ -36,12 +37,9 @@ class UserDetailsService(private val db: Database, private val authServiceRPC: A
         val user = loadUserByUsernameInternal(username)
         // Setting UserDetails authorities
         return UserDetails().copyFrom(user).apply {
-            setAuthorities(db
-                .from(RoleRepository)
-                .leftJoin(UserRoleRepository, on = RoleRepository.id eq UserRoleRepository.roleID)
-                .select(RoleRepository.name)
-                .where(UserRoleRepository.userUUID eq user.uuid)
-                .map { SimpleGrantedAuthority(it[RoleRepository.name]) })
+            setAuthorities(db.userRoles
+                .filter { it.userUUID eq user.uuid }
+                .map { SimpleGrantedAuthority(it.role.name) })
         }
     }
 
@@ -58,12 +56,9 @@ class UserDetailsService(private val db: Database, private val authServiceRPC: A
             ?: throw BadCredentialsException(C.BAD_CREDENTIALS.msg)
         // Setting UserDetailsDTO authorities
         return UserLoginVO(UserDetailsDTO().copyFrom(user).apply {
-            authorities = db
-                .from(RoleRepository)
-                .leftJoin(UserRoleRepository, on = RoleRepository.id eq UserRoleRepository.roleID)
-                .select(RoleRepository.name)
-                .where(UserRoleRepository.userUUID eq user.uuid)
-                .map { it[RoleRepository.name].toString() }
+            authorities = db.userRoles
+                .filter { it.userUUID eq user.uuid }
+                .map { it.role.name }
         }, jwt)
     }
 

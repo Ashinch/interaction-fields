@@ -17,7 +17,7 @@ object UserRoleRepository : Table<UserRole>("tb_user_role") {
 
     val id = int("id").primaryKey().bindTo { it.id }
     val userUUID = varchar("user_uuid").bindTo { it.userUUID }
-    val roleID = int("role_id").bindTo { it.roleID }
+    val role = int("role_id").references(RoleRepository) { it.role }
 
     /**
      * Return a default entity sequence of [UserRoleRepository].

@@ -12,6 +12,6 @@ interface Role : Entity<Role> {
 
     companion object : Entity.Factory<Role>()
 
-    val id: Int
+    var id: Int
     var name: String
 }

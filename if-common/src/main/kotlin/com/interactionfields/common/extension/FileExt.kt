@@ -1,6 +1,8 @@
 package com.interactionfields.common.extension
 
-import java.io.*
+import java.io.BufferedReader
+import java.io.InputStream
+import java.io.InputStreamReader
 
 /**
  * Utilities about the File.

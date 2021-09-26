@@ -17,11 +17,9 @@ object AttachmentRepository : Table<Attachment>("tb_attachment") {
     val uuid = varchar("uuid").bindTo { it.uuid }
     val meetingUUID = varchar("meeting_uuid").bindTo { it.meetingUUID }
     val binary = blob("binary").bindTo { it.binary }
-    val typeID = int("type_id").references(AttachmentTypeRepository) { it.type }
+    val type = int("type_id").references(AttachmentTypeRepository) { it.type }
     val result = blob("result").bindTo { it.result }
-
-    //    val status = int("status").bindTo { it.status }
-    val statusID = int("status_id").references(AttachmentStatusRepository) { it.status }
+    val status = int("status_id").references(AttachmentStatusRepository) { it.status }
     val createAt = datetime("create_at").bindTo { it.createAt }
     val endAt = datetime("end_at").bindTo { it.endAt }
 

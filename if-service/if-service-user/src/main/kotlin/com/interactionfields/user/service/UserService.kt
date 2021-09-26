@@ -1,6 +1,7 @@
 package com.interactionfields.user.service
 
 import com.interactionfields.auth.common.util.BCryptPasswordEncoderExt.encodeBCrypt
+import com.interactionfields.common.domain.Role
 import com.interactionfields.common.domain.User
 import com.interactionfields.common.domain.UserRole
 import com.interactionfields.common.repository.RoleRepository
@@ -31,7 +32,7 @@ class UserService(private val db: Database) {
 
         Assert.isTrue(db.userRoles.add(UserRole().apply {
             userUUID = user.uuid
-            roleID = RoleRepository.IDEnum.USER
+            role = Role().apply { id = RoleRepository.IDEnum.USER }
         }) > 0, "failed to assign role")
     }
 }
