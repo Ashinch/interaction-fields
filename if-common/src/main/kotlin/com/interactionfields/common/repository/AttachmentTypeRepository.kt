@@ -26,9 +26,10 @@ object AttachmentTypeRepository : Table<AttachmentType>("dict_attachment_type") 
     object Enum {
 
         const val LANGUAGE_JAVA = 1
-        const val LANGUAGE_CPP = 2
-        const val LANGUAGE_CLANG = 3
+        const val LANGUAGE_PYTHON2 = 2
+        const val LANGUAGE_PYTHON3 = 3
         const val LANGUAGE_JAVASCRIPT = 4
-        const val LANGUAGE_PYTHON = 5
+        const val LANGUAGE_C = 5
+        const val LANGUAGE_CPP = 6
     }
 }

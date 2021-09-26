@@ -7,7 +7,6 @@ import com.interactionfields.common.mq.RabbitMQExchanges
 import com.interactionfields.common.mq.RabbitMQExt.defaultConvertAndSend
 import com.interactionfields.common.mq.RabbitMQRoutingKeys
 import com.interactionfields.common.repository.AttachmentRepository.attachments
-import com.interactionfields.common.repository.AttachmentTypeRepository
 import com.interactionfields.common.repository.MeetingRepository.meetings
 import mu.KotlinLogging
 import org.ktorm.database.Database
@@ -32,12 +31,12 @@ class JudgeService(
      * Add an attachment and send it to
      * the [RabbitMQRoutingKeys.MEETING_JUDGE_COMMIT] consumer.
      */
-    fun commit(binary: String, meetingUUID: String): Boolean {
+    fun commit(meetingUUID: String, typeID: Int, binary: String): Boolean {
         val attachment = Attachment().apply {
             uuid = uuid36
             this.meetingUUID = meetingUUID
             this.binary = binary.toByteArray()
-            type = AttachmentType().apply { id = AttachmentTypeRepository.Enum.LANGUAGE_JAVA }
+            type = AttachmentType().apply { id = typeID }
             createAt = LocalDateTime.now()
         }
         if (db.attachments.add(attachment) <= 0) return false

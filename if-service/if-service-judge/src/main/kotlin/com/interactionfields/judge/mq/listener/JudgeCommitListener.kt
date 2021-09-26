@@ -1,6 +1,7 @@
 package com.interactionfields.judge.mq.listener
 
 import com.interactionfields.common.domain.Attachment
+import com.interactionfields.common.extension.FileExt.del
 import com.interactionfields.common.extension.ObjectExt.copyFrom
 import com.interactionfields.common.mq.RabbitMQExchanges
 import com.interactionfields.common.mq.RabbitMQExt.defaultAck
@@ -60,23 +61,26 @@ class JudgeCommitListener(
         logger.info { "Messages are received: $msg" }
 
         val attachment = msg.payload as Attachment
+        val mountsPath = "/Users/ash/dev/set/docker/commit/"
+        val hostPath = mountsPath + attachment.uuid
+        val containerInnerPath = "/commit/${attachment.uuid}"
         var process: Process? = null
         try {
-            val path = "/Users/ash/Desktop/commit/${attachment.uuid}"
-            // TODO: 待商榷
-            File(path).mkdir()
-            File("$path/Main.java").writeBytes(attachment.binary)
-            // Execute the compile script
-            process = ProcessBuilder(listOf("/Users/ash/Desktop/compile.sh", "$path/Main.java"))
-                .redirectErrorStream(true)
-                .start()
-            // Waiting for
-            val waitFor = process.waitFor()
+            File(hostPath).mkdir()
+            File("$hostPath/main").writeBytes(attachment.binary)
+            // Call the run script inside the Docker container (Maybe I can use the socket),
+            // We do not need to quote -c arguments when using arrays.
+            process = ProcessBuilder(listOf(
+                "/usr/local/bin/docker", "exec",
+                "judger", "/bin/sh", "-c",
+                "/run.sh ${attachment.type.id} $containerInnerPath/main"
+            )).redirectErrorStream(true).start()
+            // Save the result
             attachment.apply {
                 status = db.attachmentStatus.find {
-                    it.id eq
-                            if (waitFor == 0) AttachmentStatusRepository.Enum.SUCCESS
-                            else AttachmentStatusRepository.Enum.FAILURE
+                    // Run code
+                    it.id eq if (process.waitFor() == 0) AttachmentStatusRepository.Enum.SUCCESS
+                    else AttachmentStatusRepository.Enum.FAILURE
                 }!!
                 result = process.inputStream.readBytes()
                 endAt = LocalDateTime.now()
@@ -88,7 +92,9 @@ class JudgeCommitListener(
                 endAt = LocalDateTime.now()
             }
         } finally {
+            // Destroy the process and delete the generated directory
             process?.destroy()
+            File(hostPath).del()
             // Update attachment
             db.attachments.update(attachment.apply { type = db.attachmentType.find { it.id eq type.id }!! })
             // Send the result to the consumer
@@ -97,7 +103,8 @@ class JudgeCommitListener(
                 RabbitMQRoutingKeys.MEETING_JUDGE_RESULT,
                 CommitResultDTO().copyFrom(attachment).apply {
                     elapsedTime = Duration.between(attachment.createAt, attachment.endAt).toMillis()
-                    result = String(attachment.result).trim()
+                    // If this fails, replace the long absolute path.
+                    result = String(attachment.result).replace("$containerInnerPath/", "").trim()
                 },
                 mapOf("code" to msg.headers["code"]!!)
             )

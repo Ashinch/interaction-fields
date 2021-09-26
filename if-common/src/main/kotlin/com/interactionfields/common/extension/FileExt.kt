@@ -1,6 +1,7 @@
 package com.interactionfields.common.extension
 
 import java.io.BufferedReader
+import java.io.File
 import java.io.InputStream
 import java.io.InputStreamReader
 
@@ -21,4 +22,16 @@ object FileExt {
             lines.forEach { results.append(it) }
             results.toString()
         }
+
+    /**
+     * Delete a file or directory.
+     */
+    fun File.del() {
+        if (this.isFile) {
+            delete()
+            return
+        }
+        this.listFiles()?.forEach { it.del() }
+        delete()
+    }
 }

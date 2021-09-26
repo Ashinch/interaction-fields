@@ -5,6 +5,7 @@ import com.alibaba.cloud.nacos.NacosServiceManager
 import com.interactionfields.common.domain.Meeting
 import com.interactionfields.common.extension.ObjectExt.copyFrom
 import com.interactionfields.common.extension.uuid6U
+import com.interactionfields.common.repository.AttachmentTypeRepository.attachmentType
 import com.interactionfields.common.repository.MeetingRepository.meetings
 import com.interactionfields.meeting.model.dto.CreateMeetingDTO
 import com.interactionfields.meeting.model.vo.MeetingStatusVO
@@ -16,6 +17,7 @@ import org.ktorm.dsl.eq
 import org.ktorm.dsl.isNull
 import org.ktorm.entity.add
 import org.ktorm.entity.find
+import org.ktorm.entity.toList
 import org.springframework.stereotype.Service
 import org.springframework.util.Assert
 import java.time.LocalDateTime
@@ -65,6 +67,7 @@ class MeetingService(
         return MeetingStatusVO().copyFrom(meeting!!).apply {
             ip = instances.ip
             port = instances.port
+            attachmentType = db.attachmentType.toList()
         }
     }
 
