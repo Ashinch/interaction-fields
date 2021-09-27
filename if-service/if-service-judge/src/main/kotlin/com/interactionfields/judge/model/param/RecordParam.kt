@@ -3,13 +3,13 @@ package com.interactionfields.judge.model.param
 import javax.validation.constraints.Min
 import javax.validation.constraints.NotEmpty
 
-class CommitParam(
+class RecordParam(
     @field:NotEmpty
     val meetingUUID: String = "",
 
     @field:Min(1)
-    val typeID: Int = 0,
+    val pageNum: Int = 0,
 
-    @field:NotEmpty
-    val code: String = "",
+    @field:Min(1)
+    val pageSize: Int = 0,
 )
