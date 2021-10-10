@@ -16,8 +16,10 @@ interface Attachment : Domain, Entity<Attachment> {
     var meetingUUID: String
     var binary: ByteArray
     var type: AttachmentType
-    var result: ByteArray
-    var status: AttachmentStatus
     var createAt: LocalDateTime
-    var endAt: LocalDateTime
+    var cpuTime: Int?
+    var realTime: Int?
+    var memory: Long?
+    var status: AttachmentStatus?
+    var result: ByteArray?
 }

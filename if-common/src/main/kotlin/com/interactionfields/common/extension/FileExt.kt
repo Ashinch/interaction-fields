@@ -34,4 +34,17 @@ object FileExt {
         this.listFiles()?.forEach { it.del() }
         delete()
     }
+
+    fun File.mkDir() {
+        val dirArray = this.absolutePath.split("/".toRegex())
+        var pathTemp = ""
+        for (i in 1 until dirArray.size) {
+            pathTemp = "$pathTemp/${dirArray[i]}"
+            val newF = File("${dirArray[0]}$pathTemp")
+            if (!newF.exists()) {
+                val cheatDir: Boolean = newF.mkdir()
+                println(cheatDir)
+            }
+        }
+    }
 }
