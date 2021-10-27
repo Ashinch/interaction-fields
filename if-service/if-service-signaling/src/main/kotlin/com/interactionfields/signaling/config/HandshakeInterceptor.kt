@@ -1,13 +1,10 @@
 package com.interactionfields.signaling.config
 
 import com.interactionfields.auth.common.util.contextAuthPrincipal
-import com.interactionfields.common.repository.MeetingRepository.meetings
+import com.interactionfields.common.domain.User
+import com.interactionfields.signaling.extension.SessionExt
+import com.interactionfields.signaling.service.StoreService
 import mu.KotlinLogging
-import org.ktorm.database.Database
-import org.ktorm.dsl.and
-import org.ktorm.dsl.eq
-import org.ktorm.dsl.isNull
-import org.ktorm.entity.find
 import org.springframework.http.server.ServerHttpRequest
 import org.springframework.http.server.ServerHttpResponse
 import org.springframework.http.server.ServletServerHttpRequest
@@ -22,7 +19,7 @@ import org.springframework.web.socket.server.HandshakeInterceptor
  * @date 2021/08/31
  */
 @Component
-class HandshakeInterceptor(private val db: Database) : HandshakeInterceptor {
+class HandshakeInterceptor(private val storeService: StoreService) : HandshakeInterceptor {
 
     private val logger = KotlinLogging.logger {}
 
@@ -36,11 +33,18 @@ class HandshakeInterceptor(private val db: Database) : HandshakeInterceptor {
         val serverHttpRequest = request as ServletServerHttpRequest
         val code = serverHttpRequest.servletRequest.getParameter("code")
         val uuid = contextAuthPrincipal.getUuid()!!
-        attributes["code"] = code
-        attributes["uuid"] = uuid
+
+        // Check code
+        val meeting = storeService.getMeeting(code) ?: return false
+
+        // Check uuid
+        val user = storeService.getUser(uuid) ?: return false
+
+        attributes[SessionExt.MEETING_UUID] = meeting.uuid
+        attributes[SessionExt.USER] = user
         // Verify the invitation code
-        return (db.meetings.find { (it.code eq code).and(it.endAt.isNull()) } != null)
-            .also { logger.info { "$uuid: Handshake $code meeting is $it" } }
+        logger.info { "$uuid: Handshake $code meeting" }
+        return true
     }
 
     /**

@@ -124,7 +124,7 @@ class JudgeCommitListener(
                 RabbitMQExchanges.JUDGE,
                 RabbitMQRoutingKeys.MEETING_JUDGE_RESULT,
                 commitResultDTO,
-                mapOf("code" to msg.headers["code"]!!)
+                mapOf("meetingUUID" to msg.headers["meetingUUID"]!!)
             )
         }
     }

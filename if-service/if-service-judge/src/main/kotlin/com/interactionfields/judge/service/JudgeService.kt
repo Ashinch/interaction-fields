@@ -47,7 +47,7 @@ class JudgeService(
             RabbitMQExchanges.JUDGE,
             RabbitMQRoutingKeys.MEETING_JUDGE_COMMIT,
             attachment,
-            mapOf("code" to db.meetings.find { it.uuid eq meetingUUID }!!.code)
+            mapOf("meetingUUID" to meetingUUID)
         )
         return true
     }

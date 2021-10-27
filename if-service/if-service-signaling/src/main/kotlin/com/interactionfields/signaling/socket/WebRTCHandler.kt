@@ -2,14 +2,15 @@ package com.interactionfields.signaling.socket
 
 import com.interactionfields.common.extension.JsonExt.toJson
 import com.interactionfields.common.extension.JsonExt.toObj
-import com.interactionfields.signaling.model.ConnectedSignaling
-import com.interactionfields.signaling.model.OperationSignaling
-import com.interactionfields.signaling.model.OpsSignaling
-import com.interactionfields.signaling.model.Signaling
+import com.interactionfields.common.extension.ObjectExt.copyFrom
+import com.interactionfields.signaling.extension.SessionExt.getMeetingUUID
+import com.interactionfields.signaling.extension.SessionExt.getUser
+import com.interactionfields.signaling.extension.SessionExt.getUserUUID
 import com.interactionfields.signaling.ot.Document
 import com.interactionfields.signaling.ot.Operation
 import com.interactionfields.signaling.ot.TextOperation
-import com.interactionfields.signaling.util.SignalingFactory
+import com.interactionfields.signaling.service.StoreService
+import com.interactionfields.signaling.signal.*
 import mu.KotlinLogging
 import org.springframework.web.socket.CloseStatus
 import org.springframework.web.socket.TextMessage
@@ -17,7 +18,6 @@ import org.springframework.web.socket.WebSocketMessage
 import org.springframework.web.socket.WebSocketSession
 import org.springframework.web.socket.handler.TextWebSocketHandler
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -26,28 +26,44 @@ import java.util.concurrent.atomic.AtomicInteger
  * @author Ashinch
  * @date 2021/08/31
  */
-class WebRTCHandler : TextWebSocketHandler() {
+class WebRTCHandler(private val storeService: StoreService) : TextWebSocketHandler() {
 
     private val logger = KotlinLogging.logger {}
 
     override fun handleMessage(session: WebSocketSession, message: WebSocketMessage<*>) {
-        logger.info { "${session.attributes["uuid"]}: ${message.payload}" }
-        message.payload.toString().toObj(Signaling::class.java).let {
-            when ((it as Signaling).event) {
-                "iceCandidate", "offer", "answer", "micChange", "cameraChange" ->
-                    onNormal(session.id, session.attributes["code"].toString(), message)
-                "languageChange", "judgeResultReceive", "editChange", "cursorChange" ->
-                    onNormal(session.id, session.attributes["code"].toString(), message)
-                "operation" ->
-                    onOperation(session.id, session.attributes["code"].toString(), (message.payload.toString()
-                        .toObj(OperationSignaling::class.java) as OperationSignaling).data!!)
+        val meetingUUID = session.getMeetingUUID()
+        val userUUID = session.getUserUUID()
+        logger.info { "In meeting: $meetingUUID, user: $userUUID, send: ${message.payload}" }
+
+        message.payload.toString().toObj(Signal::class.java).let {
+            when ((it as Signal).event) {
+                Event.ICE_CANDIDATE,
+                Event.OFFER,
+                Event.ANSWER,
+                Event.MIC_CHANGE,
+                Event.CAMERA_CHANGE -> {
+                    onNormal(session.id, meetingUUID, message)
+                }
+
+                Event.LANGUAGE_CHANGE,
+                Event.JUDGE_RESULT_RECEIVE,
+                Event.EDIT_CHANGE,
+                Event.CURSOR_CHANGE -> {
+                    onNormal(session.id, meetingUUID, message)
+                }
+
+                Event.OPERATION -> {
+                    onOperation(session.id, meetingUUID, (message.payload.toString()
+                        .toObj(OperationSignal::class.java) as OperationSignal).data!!)
+                }
+
                 else -> return
             }
         }
     }
 
-    private fun onNormal(sessionId: String, code: String, message: WebSocketMessage<*>) {
-        broadcast(code, message, sessionId)
+    private fun onNormal(sessionId: String, meetingUUID: String, message: WebSocketMessage<*>) {
+        forward(meetingUUID, message, excludeSessionId = sessionId)
     }
 
     /**
@@ -55,9 +71,9 @@ class WebRTCHandler : TextWebSocketHandler() {
      * operation, applies it to the current document and returns the operation
      * to send to the clients.
      */
-    private fun onOperation(sessionId: String, code: String, op: Operation) {
-        synchronized(docPools[code]!!) {
-            val doc = docPools[code]!!
+    private fun onOperation(sessionId: String, meetingUUID: String, op: Operation) {
+        synchronized(docPools[meetingUUID]!!) {
+            val doc = docPools[meetingUUID]!!
             if (op.version!! < 0 || doc.operation.ops.size < op.version) {
                 logger.error { "operation revision not in history" }
                 return
@@ -76,42 +92,26 @@ class WebRTCHandler : TextWebSocketHandler() {
             }
             println("operation.ops: ${operation.ops}")
 
-            // Store operation
+            // StoreService operation
             operation.ops.forEach { doc.operation.ops.add(it) }
             doc.content = operation.apply(doc.content)
-            docPools[code] = doc
+            docPools[meetingUUID] = doc
 
             emit(
-                code, sessionId,
-                TextMessage(SignalingFactory.create(SignalingFactory.ACK, doc.operation.ops.size).toJson())
+                meetingUUID,
+                sessionId,
+                Event.ACK,
+                doc.operation.ops.size
             )
-            broadcast(code, TextMessage(SignalingFactory.create(
-                SignalingFactory.OPERATION,
-                OpsSignaling().apply {
+            broadcast(
+                meetingUUID,
+                Event.OPERATION,
+                OpsSignal().apply {
                     version = doc.operation.ops.size
                     ops = operation.ops
-                }
-            ).toJson()), sessionId = sessionId)
-        }
-    }
-
-    private fun broadcast(code: String, message: WebSocketMessage<*>, sessionId: String? = null) {
-        sessionPools[code]?.forEach {
-            synchronized(it) {
-                if (sessionId == null || it.id != sessionId) {
-                    it.sendMessage(message)
-                }
-            }
-        }
-    }
-
-    private fun emit(code: String, sessionId: String, message: WebSocketMessage<*>) {
-        sessionPools[code]?.forEach {
-            synchronized(it) {
-                if (it.id == sessionId) {
-                    it.sendMessage(message)
-                }
-            }
+                },
+                excludeSessionId = sessionId
+            )
         }
     }
 
@@ -120,27 +120,59 @@ class WebRTCHandler : TextWebSocketHandler() {
      */
     override fun afterConnectionEstablished(session: WebSocketSession) {
         // TODO: 重复链接处理？
-        val code = session.attributes["code"].toString()
-        sessionPools[code] = sessionPools[code] ?: CopyOnWriteArrayList()
-        docPools[code] = docPools[code] ?: Document("", TextOperation())
-        sessionPools[code]!!.add(session)
+        val meetingUUID = session.getMeetingUUID()
+        val userUUID = session.getUserUUID()
+        sessionPools[meetingUUID] = sessionPools[meetingUUID] ?: ConcurrentHashMap()
+        sessionPools[meetingUUID]!![userUUID] = session
+        docPools[meetingUUID] = docPools[meetingUUID] ?: Document("", TextOperation())
+        storeService.onJoin(userUUID, meetingUUID, (docPools[meetingUUID] as Document).content.toByteArray())
         emit(
-            code, session.id,
-            TextMessage(SignalingFactory.create(
-                SignalingFactory.CONNECTED,
-                ConnectedSignaling().apply {
-                    version = docPools[code]!!.operation.ops.size
-                    content = docPools[code]!!.content
-                }
-            ).toJson())
+            meetingUUID,
+            session.id,
+            Event.CONNECTED,
+            ConnectedSignal().apply {
+                version = docPools[meetingUUID]!!.operation.ops.size
+                content = docPools[meetingUUID]!!.content
+            }
         )
+        broadcast(
+            meetingUUID,
+            Event.JOIN,
+            JoinSignal().copyFrom(session.getUser()),
+            excludeSessionId = session.id
+        )
+
+        if (sessionPools[meetingUUID]!!.size > 1) {
+            sessionPools[meetingUUID]!!.forEach {
+                if (it.key != userUUID) {
+                    emit(
+                        meetingUUID,
+                        session.id,
+                        Event.JOIN,
+                        JoinSignal().copyFrom(storeService.getUser(it.value.getUser().uuid)!!)
+                    )
+                    return@forEach
+                }
+            }
+
+        }
         addOnlineCount()
-        logger.info { "${session.attributes["uuid"]}: Connect ${session.attributes["code"]} meeting, the current number is $onlineNum" }
+        logger.info { "$userUUID: Connect $meetingUUID meeting, the current number is $onlineNum" }
     }
 
     override fun afterConnectionClosed(session: WebSocketSession, closeStatus: CloseStatus) {
-        logger.info { "${session.attributes["uuid"]}: Disconnect" }
-        sessionPools[session.attributes["code"]]!!.remove(session)
+        val meetingUUID = session.getMeetingUUID()
+        val userUUID = session.getUserUUID()
+        val doc = (docPools[meetingUUID] as Document).content.toByteArray()
+        logger.info { "$userUUID: Disconnect" }
+        sessionPools[meetingUUID]!!.remove(userUUID)
+        storeService.onQuit(userUUID, meetingUUID, doc)
+        broadcast(
+            meetingUUID,
+            Event.QUIT,
+            JoinSignal().copyFrom(session.getUser()),
+            excludeSessionId = session.id
+        )
         subOnlineCount()
     }
 
@@ -152,14 +184,44 @@ class WebRTCHandler : TextWebSocketHandler() {
         private val onlineNum = AtomicInteger()
 
         // concurrent包的线程安全Set，用来存放每个客户端对应的WebSocketServer对象。
-        private val sessionPools = ConcurrentHashMap<String, CopyOnWriteArrayList<WebSocketSession>>()
+        private val sessionPools = ConcurrentHashMap<String, ConcurrentHashMap<String, WebSocketSession>>()
 
-        /**
-         * Broadcasts a [message] to the [code] meeting.
-         */
-        fun sendMessage(code: String, message: WebSocketMessage<*>) {
-            println("Broadcast meeting: $code, messages: ${message.payload}")
-            sessionPools[code]?.forEach { it.sendMessage(message) }
+        private fun sandMessage(
+            meetingUUID: String,
+            message: WebSocketMessage<*>,
+            targetSessionId: String? = null,
+            excludeSessionId: String? = null
+        ) {
+            sessionPools[meetingUUID]?.forEach {
+                synchronized(it) {
+                    if (targetSessionId != null && it.value.id == targetSessionId) {
+                        it.value.sendMessage(message)
+                    }
+                    if (targetSessionId == null && (excludeSessionId == null || it.value.id != excludeSessionId)) {
+                        it.value.sendMessage(message)
+                    }
+                }
+            }
+        }
+
+        fun forward(meetingUUID: String, message: WebSocketMessage<*>, excludeSessionId: String? = null) {
+            sandMessage(meetingUUID, message, excludeSessionId = excludeSessionId)
+        }
+
+        fun broadcast(meetingUUID: String, signal: String, data: Any, excludeSessionId: String? = null) {
+            sandMessage(
+                meetingUUID,
+                TextMessage(SignalFactory.create(signal, data).toJson()),
+                excludeSessionId = excludeSessionId
+            )
+        }
+
+        fun emit(meetingUUID: String, targetSessionId: String, signal: String, data: Any) {
+            sandMessage(
+                meetingUUID,
+                TextMessage(SignalFactory.create(signal, data).toJson()),
+                targetSessionId = targetSessionId
+            )
         }
 
         /**

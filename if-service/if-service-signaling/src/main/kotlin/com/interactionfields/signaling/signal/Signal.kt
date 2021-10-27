@@ -1,8 +1,8 @@
-package com.interactionfields.signaling.model
+package com.interactionfields.signaling.signal
 
 import java.io.Serializable
 
-data class Signaling(
+data class Signal(
     var event: String? = null,
     var data: Any? = null,
 ) : Serializable

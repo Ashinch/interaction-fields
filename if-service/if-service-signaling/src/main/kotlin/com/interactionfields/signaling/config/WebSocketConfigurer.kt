@@ -1,5 +1,6 @@
 package com.interactionfields.signaling.config
 
+import com.interactionfields.signaling.service.StoreService
 import com.interactionfields.signaling.socket.WebRTCHandler
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -16,7 +17,10 @@ import org.springframework.web.socket.server.standard.ServletServerContainerFact
  */
 @Configuration
 @EnableWebSocket
-class WebSocketConfigurer(private val handshakeInterceptor: HandshakeInterceptor) : WebSocketConfigurer {
+class WebSocketConfigurer(
+    private val handshakeInterceptor: HandshakeInterceptor,
+    private val storeService: StoreService
+) : WebSocketConfigurer {
 
     private val MAX_MESSAGE_SIZE = 20 * 1024
     private val MAX_IDLE = 60 * 60 * 1000
@@ -35,7 +39,7 @@ class WebSocketConfigurer(private val handshakeInterceptor: HandshakeInterceptor
      */
     override fun registerWebSocketHandlers(webSocketHandlerRegistry: WebSocketHandlerRegistry) {
         webSocketHandlerRegistry
-            .addHandler(WebRTCHandler(), "/webrtc")
+            .addHandler(WebRTCHandler(storeService), "/webrtc")
             .setAllowedOrigins("*")
             .addInterceptors(handshakeInterceptor)
     }
