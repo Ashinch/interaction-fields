@@ -1,6 +1,7 @@
-package com.interactionfields.signaling.signal
+package com.interactionfields.signaling.model.signal
 
 object Event {
+
     const val ICE_CANDIDATE = "iceCandidate"
     const val OFFER = "offer"
     const val ANSWER = "answer"
@@ -13,6 +14,9 @@ object Event {
     const val ACK = "ack"
     const val CONNECTED = "connected"
     const val OPERATION = "operation"
+    const val REMIND = "remind"
+    const val HIDDEN = "hidden"
+    const val NOTE = "note"
     const val JOIN = "join"
     const val QUIT = "quit"
 }

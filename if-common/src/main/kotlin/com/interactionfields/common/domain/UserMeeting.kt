@@ -17,6 +17,7 @@ interface UserMeeting : Entity<UserMeeting> {
     var userUUID: String
     var meetingUUID: String
     var doc: ByteArray
+    var note: ByteArray?
     var joinAt: LocalDateTime
     var quitAt: LocalDateTime
 }

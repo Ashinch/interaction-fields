@@ -1,8 +1,8 @@
-package com.interactionfields.signaling.signal
+package com.interactionfields.signaling.model.dto
 
 import com.interactionfields.signaling.ot.Operation
 
-data class OperationSignal(
+data class OperationSignalDTO(
     val event: String? = null,
     val data: Operation? = null
 )

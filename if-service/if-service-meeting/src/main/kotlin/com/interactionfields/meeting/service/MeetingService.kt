@@ -2,19 +2,21 @@ package com.interactionfields.meeting.service
 
 import com.alibaba.cloud.nacos.NacosDiscoveryProperties
 import com.alibaba.cloud.nacos.NacosServiceManager
+import com.interactionfields.auth.common.util.contextAuthPrincipal
 import com.interactionfields.common.domain.Meeting
 import com.interactionfields.common.extension.ObjectExt.copyFrom
 import com.interactionfields.common.extension.uuid6U
 import com.interactionfields.common.repository.AttachmentTypeRepository.attachmentType
+import com.interactionfields.common.repository.MeetingRepository
 import com.interactionfields.common.repository.MeetingRepository.meetings
+import com.interactionfields.common.repository.UserMeetingRepository
 import com.interactionfields.meeting.model.dto.CreateMeetingDTO
 import com.interactionfields.meeting.model.vo.MeetingStatusVO
 import com.interactionfields.meeting.model.vo.MeetingVO
+import com.interactionfields.meeting.model.vo.RecordVO
 import mu.KotlinLogging
 import org.ktorm.database.Database
-import org.ktorm.dsl.and
-import org.ktorm.dsl.eq
-import org.ktorm.dsl.isNull
+import org.ktorm.dsl.*
 import org.ktorm.entity.add
 import org.ktorm.entity.find
 import org.ktorm.entity.toList
@@ -22,6 +24,7 @@ import org.springframework.stereotype.Service
 import org.springframework.util.Assert
 import java.time.LocalDateTime
 import java.util.*
+import kotlin.math.ceil
 
 @Service
 //@Transactional(rollbackFor = [Exception::class])
@@ -84,5 +87,52 @@ class MeetingService(
             }
         }
         throw IllegalArgumentException("Error generate invitation code")
+    }
+
+    fun getRecord(onlyCreator: Boolean, word: String, drop: Int, take: Int): RecordVO {
+        val contextUUID = contextAuthPrincipal.getUuid()!!
+        val condition =
+            if (onlyCreator) (MeetingRepository.creatorUUID eq contextUUID)
+                .and(UserMeetingRepository.userUUID eq contextUUID)
+                .and(MeetingRepository.title like "%$word%")
+            else (UserMeetingRepository.userUUID eq contextUUID)
+                .and(MeetingRepository.title like "%$word%")
+        val leftJoinOnCol = UserMeetingRepository.meetingUUID eq MeetingRepository.uuid
+
+        return RecordVO().apply {
+            records = db.from(UserMeetingRepository)
+                .leftJoin(MeetingRepository, on = leftJoinOnCol)
+                .select(
+                    MeetingRepository.uuid,
+                    MeetingRepository.creatorUUID,
+                    MeetingRepository.title,
+                    UserMeetingRepository.doc,
+                    UserMeetingRepository.note,
+                    UserMeetingRepository.joinAt,
+                    UserMeetingRepository.quitAt,
+                )
+                .where(condition)
+                .limit(drop, take)
+                .orderBy(UserMeetingRepository.joinAt.desc())
+                .map {
+                    MeetingVO().apply {
+                        uuid = it[MeetingRepository.uuid]
+                        creatorUUID = it[MeetingRepository.creatorUUID]
+                        title = it[MeetingRepository.title]
+                        doc = String(it[UserMeetingRepository.doc] ?: ByteArray(0))
+                        note = String(it[UserMeetingRepository.note] ?: ByteArray(0))
+                        joinAt = it[UserMeetingRepository.joinAt]
+                        quitAt = it[UserMeetingRepository.quitAt]
+                    }
+                }
+            total = ceil(
+                db.from(UserMeetingRepository)
+                    .leftJoin(MeetingRepository, on = leftJoinOnCol)
+                    .select(MeetingRepository.uuid)
+                    .where(condition)
+                    .limit(drop, take)
+                    .totalRecords / take.toDouble()
+            ).toInt()
+        }
     }
 }

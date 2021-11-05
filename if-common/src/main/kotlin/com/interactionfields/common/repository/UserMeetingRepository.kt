@@ -17,6 +17,7 @@ object UserMeetingRepository : Table<UserMeeting>("tb_user_meeting") {
     val userUUID = varchar("user_uuid").bindTo { it.userUUID }
     val meetingUUID = varchar("meeting_uuid").bindTo { it.meetingUUID }
     var doc = blob("doc").bindTo { it.doc }
+    var note = blob("note").bindTo { it.note }
     var joinAt = datetime("join_at").bindTo { it.joinAt }
     var quitAt = datetime("quit_at").bindTo { it.quitAt }
 

@@ -42,11 +42,12 @@ class StoreService(private val db: Database) {
         }
     }
 
-    fun onQuit(userUUID: String, meetingUUID: String, document: ByteArray) {
+    fun onQuit(userUUID: String, meetingUUID: String, document: ByteArray, note: ByteArray?) {
         db.userMeetings.find {
             (it.userUUID eq userUUID).and(it.meetingUUID eq meetingUUID)
         }?.let {
             it.doc = document
+            it.note = note
             it.quitAt = LocalDateTime.now()
             it.flushChanges()
         }

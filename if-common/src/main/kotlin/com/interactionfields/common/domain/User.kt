@@ -14,6 +14,7 @@ interface User : Domain, Entity<User> {
     companion object : Entity.Factory<User>()
 
     var username: String
+    var name: String
     var mobile: String
     var email: String
     var password: String

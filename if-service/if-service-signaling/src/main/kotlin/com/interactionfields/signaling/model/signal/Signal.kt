@@ -1,4 +1,4 @@
-package com.interactionfields.signaling.signal
+package com.interactionfields.signaling.model.signal
 
 import java.io.Serializable
 

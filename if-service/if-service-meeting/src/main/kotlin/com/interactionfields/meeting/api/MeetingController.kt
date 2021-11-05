@@ -5,10 +5,12 @@ import com.interactionfields.auth.common.util.contextAuthPrincipal
 import com.interactionfields.common.response.R
 import com.interactionfields.meeting.model.dto.CreateMeetingDTO
 import com.interactionfields.meeting.model.param.CreateMeetingParam
+import com.interactionfields.meeting.model.param.RecordParam
 import com.interactionfields.meeting.service.MeetingService
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
+import javax.validation.Valid
 
 @Validated
 @RestController
@@ -36,4 +38,14 @@ class MeetingController(private val meetingService: MeetingService) {
     fun join(): R {
         return R.judge(meetingService.create(CreateMeetingDTO("", "")), "create error")
     }
+
+    @PostMapping("/record")
+    @PreAuthorize(HasAuthority.USER)
+    fun record(@Valid recordParam: RecordParam): R =
+        R.judge(meetingService.getRecord(
+            recordParam.onlyCreator,
+            recordParam.word,
+            recordParam.pageNum * recordParam.pageSize - recordParam.pageSize,
+            recordParam.pageSize
+        ))
 }

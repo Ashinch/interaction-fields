@@ -6,17 +6,21 @@ import com.interactionfields.common.extension.ObjectExt.copyFrom
 import com.interactionfields.signaling.extension.SessionExt.getMeetingUUID
 import com.interactionfields.signaling.extension.SessionExt.getUser
 import com.interactionfields.signaling.extension.SessionExt.getUserUUID
-import com.interactionfields.signaling.ot.Document
+import com.interactionfields.signaling.model.MeetingDO
+import com.interactionfields.signaling.model.dto.NoteSignalDTO
+import com.interactionfields.signaling.model.dto.OperationSignalDTO
+import com.interactionfields.signaling.model.dto.RemindSignalDTO
+import com.interactionfields.signaling.model.signal.*
 import com.interactionfields.signaling.ot.Operation
 import com.interactionfields.signaling.ot.TextOperation
 import com.interactionfields.signaling.service.StoreService
-import com.interactionfields.signaling.signal.*
 import mu.KotlinLogging
 import org.springframework.web.socket.CloseStatus
 import org.springframework.web.socket.TextMessage
 import org.springframework.web.socket.WebSocketMessage
 import org.springframework.web.socket.WebSocketSession
 import org.springframework.web.socket.handler.TextWebSocketHandler
+import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -54,7 +58,21 @@ class WebRTCHandler(private val storeService: StoreService) : TextWebSocketHandl
 
                 Event.OPERATION -> {
                     onOperation(session.id, meetingUUID, (message.payload.toString()
-                        .toObj(OperationSignal::class.java) as OperationSignal).data!!)
+                        .toObj(OperationSignalDTO::class.java) as OperationSignalDTO).data!!)
+                }
+
+                Event.REMIND -> {
+                    onRemind(meetingUUID, (message.payload.toString()
+                        .toObj(RemindSignalDTO::class.java) as RemindSignalDTO).data!!)
+                }
+
+                Event.HIDDEN -> {
+                    broadcast(meetingUUID, Event.HIDDEN, null)
+                }
+
+                Event.NOTE -> {
+                    onNote(meetingUUID, userUUID, (message.payload.toString()
+                        .toObj(NoteSignalDTO::class.java) as NoteSignalDTO).data!!)
                 }
 
                 else -> return
@@ -72,8 +90,8 @@ class WebRTCHandler(private val storeService: StoreService) : TextWebSocketHandl
      * to send to the clients.
      */
     private fun onOperation(sessionId: String, meetingUUID: String, op: Operation) {
-        synchronized(docPools[meetingUUID]!!) {
-            val doc = docPools[meetingUUID]!!
+        synchronized(meetingPool[meetingUUID]!!.document) {
+            val doc = meetingPool[meetingUUID]!!.document
             if (op.version!! < 0 || doc.operation.ops.size < op.version) {
                 logger.error { "operation revision not in history" }
                 return
@@ -95,7 +113,7 @@ class WebRTCHandler(private val storeService: StoreService) : TextWebSocketHandl
             // StoreService operation
             operation.ops.forEach { doc.operation.ops.add(it) }
             doc.content = operation.apply(doc.content)
-            docPools[meetingUUID] = doc
+            meetingPool[meetingUUID]!!.document = doc
 
             emit(
                 meetingUUID,
@@ -115,6 +133,20 @@ class WebRTCHandler(private val storeService: StoreService) : TextWebSocketHandl
         }
     }
 
+    private fun onRemind(meetingUUID: String, remind: Int) {
+        val localDateTime = if (remind > 0) LocalDateTime.now().plusMinutes(remind.toLong()) else null
+        meetingPool[meetingUUID]!!.remind = localDateTime
+        broadcast(
+            meetingUUID,
+            Event.REMIND,
+            localDateTime
+        )
+    }
+
+    private fun onNote(meetingUUID: String, userUUID: String, note: String) {
+        meetingPool[meetingUUID]!!.notePool[userUUID] = note
+    }
+
     /**
      * 建立连接后应该在sessionPools中存储对应会议code的连接信息，
      */
@@ -122,19 +154,26 @@ class WebRTCHandler(private val storeService: StoreService) : TextWebSocketHandl
         // TODO: 重复链接处理？
         val meetingUUID = session.getMeetingUUID()
         val userUUID = session.getUserUUID()
-        sessionPools[meetingUUID] = sessionPools[meetingUUID] ?: ConcurrentHashMap()
-        sessionPools[meetingUUID]!![userUUID] = session
-        docPools[meetingUUID] = docPools[meetingUUID] ?: Document("", TextOperation())
-        storeService.onJoin(userUUID, meetingUUID, (docPools[meetingUUID] as Document).content.toByteArray())
+
+        meetingPool[meetingUUID] = meetingPool[meetingUUID] ?: MeetingDO()
+        meetingPool[meetingUUID]!!.sessionPool[userUUID] = session
+
+        storeService.onJoin(userUUID, meetingUUID, meetingPool[meetingUUID]!!.document.content.toByteArray())
+
+        // Send a connected signal to this session
         emit(
             meetingUUID,
             session.id,
             Event.CONNECTED,
             ConnectedSignal().apply {
-                version = docPools[meetingUUID]!!.operation.ops.size
-                content = docPools[meetingUUID]!!.content
+                version = meetingPool[meetingUUID]!!.document.operation.ops.size
+                content = meetingPool[meetingUUID]!!.document.content
+                remind = meetingPool[meetingUUID]!!.remind
+                note = meetingPool[meetingUUID]!!.notePool[userUUID]
             }
         )
+
+        // Broadcast this user information to other sessions
         broadcast(
             meetingUUID,
             Event.JOIN,
@@ -142,8 +181,9 @@ class WebRTCHandler(private val storeService: StoreService) : TextWebSocketHandl
             excludeSessionId = session.id
         )
 
-        if (sessionPools[meetingUUID]!!.size > 1) {
-            sessionPools[meetingUUID]!!.forEach {
+        // Send other user information to this session
+        if (meetingPool[meetingUUID]!!.sessionPool.size > 1) {
+            meetingPool[meetingUUID]!!.sessionPool.forEach {
                 if (it.key != userUUID) {
                     emit(
                         meetingUUID,
@@ -160,13 +200,17 @@ class WebRTCHandler(private val storeService: StoreService) : TextWebSocketHandl
         logger.info { "$userUUID: Connect $meetingUUID meeting, the current number is $onlineNum" }
     }
 
+    /**
+     * Disconnect
+     */
     override fun afterConnectionClosed(session: WebSocketSession, closeStatus: CloseStatus) {
         val meetingUUID = session.getMeetingUUID()
         val userUUID = session.getUserUUID()
-        val doc = (docPools[meetingUUID] as Document).content.toByteArray()
+        val doc = meetingPool[meetingUUID]!!.document.content.toByteArray()
+        val note = meetingPool[meetingUUID]!!.notePool[userUUID]?.toByteArray()
         logger.info { "$userUUID: Disconnect" }
-        sessionPools[meetingUUID]!!.remove(userUUID)
-        storeService.onQuit(userUUID, meetingUUID, doc)
+        meetingPool[meetingUUID]!!.sessionPool.remove(userUUID)
+        storeService.onQuit(userUUID, meetingUUID, doc, note)
         broadcast(
             meetingUUID,
             Event.QUIT,
@@ -178,21 +222,23 @@ class WebRTCHandler(private val storeService: StoreService) : TextWebSocketHandl
 
     companion object {
 
-        private var docPools = ConcurrentHashMap<String, Document>()
-
         // 静态变量，用来记录当前在线连接数。应该把它设计成线程安全的。
         private val onlineNum = AtomicInteger()
 
         // concurrent包的线程安全Set，用来存放每个客户端对应的WebSocketServer对象。
-        private val sessionPools = ConcurrentHashMap<String, ConcurrentHashMap<String, WebSocketSession>>()
+        private val meetingPool = ConcurrentHashMap<String, MeetingDO>()
 
+        /**
+         * Send a [message] to [targetSessionId]
+         * or send a [message] to all session but [excludeSessionId].
+         */
         private fun sandMessage(
             meetingUUID: String,
             message: WebSocketMessage<*>,
             targetSessionId: String? = null,
             excludeSessionId: String? = null
         ) {
-            sessionPools[meetingUUID]?.forEach {
+            meetingPool[meetingUUID]!!.sessionPool.forEach {
                 synchronized(it) {
                     if (targetSessionId != null && it.value.id == targetSessionId) {
                         it.value.sendMessage(message)
@@ -204,11 +250,17 @@ class WebRTCHandler(private val storeService: StoreService) : TextWebSocketHandl
             }
         }
 
+        /**
+         * Forward a [message] to all session but [excludeSessionId].
+         */
         fun forward(meetingUUID: String, message: WebSocketMessage<*>, excludeSessionId: String? = null) {
             sandMessage(meetingUUID, message, excludeSessionId = excludeSessionId)
         }
 
-        fun broadcast(meetingUUID: String, signal: String, data: Any, excludeSessionId: String? = null) {
+        /**
+         * Broadcast a [signal] to all session but [excludeSessionId].
+         */
+        fun broadcast(meetingUUID: String, signal: String, data: Any?, excludeSessionId: String? = null) {
             sandMessage(
                 meetingUUID,
                 TextMessage(SignalFactory.create(signal, data).toJson()),
@@ -216,6 +268,9 @@ class WebRTCHandler(private val storeService: StoreService) : TextWebSocketHandl
             )
         }
 
+        /**
+         * Send a [signal] to [targetSessionId].
+         */
         fun emit(meetingUUID: String, targetSessionId: String, signal: String, data: Any) {
             sandMessage(
                 meetingUUID,

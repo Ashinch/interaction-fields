@@ -19,6 +19,7 @@ object UserRepository : Table<User>("tb_user") {
     val id = int("id").primaryKey().bindTo { it.id }
     val uuid = varchar("uuid").bindTo { it.uuid }
     val username = varchar("username").bindTo { it.username }
+    val name = varchar("name").bindTo { it.name }
     val mobile = varchar("mobile").bindTo { it.mobile }
     val email = varchar("email").bindTo { it.email }
     val password = varchar("password").bindTo { it.password }
