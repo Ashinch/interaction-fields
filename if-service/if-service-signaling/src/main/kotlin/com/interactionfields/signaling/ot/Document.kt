@@ -1,6 +1,8 @@
 package com.interactionfields.signaling.ot
 
+import java.util.concurrent.CopyOnWriteArrayList
+
 data class Document(
     var content: String,
-    var operation: TextOperation
+    var operations: CopyOnWriteArrayList<TextOperation>
 )

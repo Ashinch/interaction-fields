@@ -19,9 +19,11 @@ import org.springframework.web.socket.CloseStatus
 import org.springframework.web.socket.TextMessage
 import org.springframework.web.socket.WebSocketMessage
 import org.springframework.web.socket.WebSocketSession
+import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator
 import org.springframework.web.socket.handler.TextWebSocketHandler
 import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -90,47 +92,42 @@ class WebRTCHandler(private val storeService: StoreService) : TextWebSocketHandl
      * to send to the clients.
      */
     private fun onOperation(sessionId: String, meetingUUID: String, op: Operation) {
-        synchronized(meetingPool[meetingUUID]!!.document) {
-            val doc = meetingPool[meetingUUID]!!.document
-            if (op.version!! < 0 || doc.operation.ops.size < op.version) {
-                logger.error { "operation revision not in history" }
-                return
-            }
-            println("op.op: ${op.op}, op.version: ${op.version}, doc.operation.ops: ${doc.operation.ops}")
-
-            // Find all operations that the client didn't know of when it sent the
-            // operation ...
-            val concurrentOperations = doc.operation.ops.slice(op.version until doc.operation.ops.size)
-            println("concurrentOperations: $concurrentOperations")
-
-            // ... and transform the operation against all these operations ...
-            var operation = TextOperation(op.op)
-            concurrentOperations.forEach {
-                operation = TextOperation.transform(operation, TextOperation(listOf(it)))[0]
-            }
-            println("operation.ops: ${operation.ops}")
-
-            // StoreService operation
-            operation.ops.forEach { doc.operation.ops.add(it) }
-            doc.content = operation.apply(doc.content)
-            meetingPool[meetingUUID]!!.document = doc
-
-            emit(
-                meetingUUID,
-                sessionId,
-                Event.ACK,
-                doc.operation.ops.size
-            )
-            broadcast(
-                meetingUUID,
-                Event.OPERATION,
-                OpsSignal().apply {
-                    version = doc.operation.ops.size
-                    ops = operation.ops
-                },
-                excludeSessionId = sessionId
-            )
+        val doc = meetingPool[meetingUUID]!!.document
+        if (op.version!! < 0 || doc.operations.size < op.version) {
+            logger.error { "operation revision not in history" }
+            return
         }
+
+        // Find all operations that the client didn't know of when it sent the
+        // operation ...
+        val concurrentOperations = CopyOnWriteArrayList(doc.operations.slice(op.version until doc.operations.size))
+
+        // ... and transform the operation against all these operations ...
+        var operation = TextOperation(op.op)
+        concurrentOperations.forEach {
+            operation = TextOperation.transform(operation, it)[0]
+        }
+
+        // StoreService operation
+        doc.operations.add(operation)
+        doc.content = operation.apply(doc.content)
+        meetingPool[meetingUUID]!!.document = doc
+
+        emit(
+            meetingUUID,
+            sessionId,
+            Event.ACK,
+            doc.operations.size
+        )
+        broadcast(
+            meetingUUID,
+            Event.OPERATION,
+            OpsSignal().apply {
+                version = doc.operations.size
+                ops = operation.ops
+            },
+            excludeSessionId = sessionId
+        )
     }
 
     private fun onRemind(meetingUUID: String, remind: Int) {
@@ -156,7 +153,8 @@ class WebRTCHandler(private val storeService: StoreService) : TextWebSocketHandl
         val userUUID = session.getUserUUID()
 
         meetingPool[meetingUUID] = meetingPool[meetingUUID] ?: MeetingDO()
-        meetingPool[meetingUUID]!!.sessionPool[userUUID] = session
+        meetingPool[meetingUUID]!!.sessionPool[userUUID] = ConcurrentWebSocketSessionDecorator(session, 2000, 4096)
+
 
         storeService.onJoin(userUUID, meetingUUID, meetingPool[meetingUUID]!!.document.content.toByteArray())
 
@@ -166,7 +164,7 @@ class WebRTCHandler(private val storeService: StoreService) : TextWebSocketHandl
             session.id,
             Event.CONNECTED,
             ConnectedSignal().apply {
-                version = meetingPool[meetingUUID]!!.document.operation.ops.size
+                version = meetingPool[meetingUUID]!!.document.operations.size
                 content = meetingPool[meetingUUID]!!.document.content
                 remind = meetingPool[meetingUUID]!!.remind
                 note = meetingPool[meetingUUID]!!.notePool[userUUID]
@@ -239,13 +237,11 @@ class WebRTCHandler(private val storeService: StoreService) : TextWebSocketHandl
             excludeSessionId: String? = null
         ) {
             meetingPool[meetingUUID]!!.sessionPool.forEach {
-                synchronized(it) {
-                    if (targetSessionId != null && it.value.id == targetSessionId) {
-                        it.value.sendMessage(message)
-                    }
-                    if (targetSessionId == null && (excludeSessionId == null || it.value.id != excludeSessionId)) {
-                        it.value.sendMessage(message)
-                    }
+                if (targetSessionId != null && it.value.id == targetSessionId) {
+                    it.value.sendMessage(message)
+                }
+                if (targetSessionId == null && (excludeSessionId == null || it.value.id != excludeSessionId)) {
+                    it.value.sendMessage(message)
                 }
             }
         }
