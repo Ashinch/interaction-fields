@@ -7,14 +7,13 @@ import com.interactionfields.signaling.extension.SessionExt.getMeetingUUID
 import com.interactionfields.signaling.extension.SessionExt.getUser
 import com.interactionfields.signaling.extension.SessionExt.getUserUUID
 import com.interactionfields.signaling.model.MeetingDO
-import com.interactionfields.signaling.model.dto.NoteSignalDTO
-import com.interactionfields.signaling.model.dto.OperationSignalDTO
-import com.interactionfields.signaling.model.dto.RemindSignalDTO
+import com.interactionfields.signaling.model.dto.*
 import com.interactionfields.signaling.model.signal.*
 import com.interactionfields.signaling.ot.Operation
 import com.interactionfields.signaling.ot.TextOperation
 import com.interactionfields.signaling.service.StoreService
 import mu.KotlinLogging
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event
 import org.springframework.web.socket.CloseStatus
 import org.springframework.web.socket.TextMessage
 import org.springframework.web.socket.WebSocketMessage
@@ -24,7 +23,6 @@ import org.springframework.web.socket.handler.TextWebSocketHandler
 import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * BroadcastController server of WebRTC.
@@ -34,15 +32,15 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 class WebRTCHandler(private val storeService: StoreService) : TextWebSocketHandler() {
 
-    private val logger = KotlinLogging.logger {}
-
     override fun handleMessage(session: WebSocketSession, message: WebSocketMessage<*>) {
         val meetingUUID = session.getMeetingUUID()
         val userUUID = session.getUserUUID()
-        logger.info { "In meeting: $meetingUUID, user: $userUUID, send: ${message.payload}" }
 
-        message.payload.toString().toObj(Signal::class.java).let {
-            when ((it as Signal).event) {
+        (message.payload.toString().toObj(Signal::class.java) as Signal).let {
+            if (it.event != Event.HEARTBEAT) {
+                logger.info { "[Receive]\nmeeting: $meetingUUID,\nuser: $userUUID\nsignal: ${it.event}\ndata: ${it.data}\n" }
+            }
+            when (it.event) {
                 Event.ICE_CANDIDATE,
                 Event.OFFER,
                 Event.ANSWER,
@@ -51,7 +49,6 @@ class WebRTCHandler(private val storeService: StoreService) : TextWebSocketHandl
                     onNormal(session.id, meetingUUID, message)
                 }
 
-                Event.LANGUAGE_CHANGE,
                 Event.JUDGE_RESULT_RECEIVE,
                 Event.EDIT_CHANGE,
                 Event.CURSOR_CHANGE -> {
@@ -61,6 +58,11 @@ class WebRTCHandler(private val storeService: StoreService) : TextWebSocketHandl
                 Event.OPERATION -> {
                     onOperation(session.id, meetingUUID, (message.payload.toString()
                         .toObj(OperationSignalDTO::class.java) as OperationSignalDTO).data!!)
+                }
+
+                Event.LANGUAGE_CHANGE -> {
+                    onLanguage(meetingUUID, session.id, (message.payload.toString()
+                        .toObj(LanguageSignalDTO::class.java) as LanguageSignalDTO).data!!)
                 }
 
                 Event.REMIND -> {
@@ -75,6 +77,11 @@ class WebRTCHandler(private val storeService: StoreService) : TextWebSocketHandl
                 Event.NOTE -> {
                     onNote(meetingUUID, userUUID, (message.payload.toString()
                         .toObj(NoteSignalDTO::class.java) as NoteSignalDTO).data!!)
+                }
+
+                Event.HEARTBEAT -> {
+                    onHeartbeat(meetingUUID, session.id, (message.payload.toString()
+                        .toObj(HeartbeatSignalDTO::class.java) as HeartbeatSignalDTO).data!!)
                 }
 
                 else -> return
@@ -140,8 +147,17 @@ class WebRTCHandler(private val storeService: StoreService) : TextWebSocketHandl
         )
     }
 
+    private fun onLanguage(meetingUUID: String, sessionId: String, languageId: Int) {
+        meetingPool[meetingUUID]!!.languageId = languageId
+        broadcast(meetingUUID, Event.LANGUAGE_CHANGE, languageId, excludeSessionId = sessionId)
+    }
+
     private fun onNote(meetingUUID: String, userUUID: String, note: String) {
         meetingPool[meetingUUID]!!.notePool[userUUID] = note
+    }
+
+    private fun onHeartbeat(meetingUUID: String, sessionId: String, timestamp: Long) {
+        emit(meetingUUID, sessionId, Event.HEARTBEAT, System.currentTimeMillis() - timestamp)
     }
 
     /**
@@ -168,6 +184,7 @@ class WebRTCHandler(private val storeService: StoreService) : TextWebSocketHandl
                 content = meetingPool[meetingUUID]!!.document.content
                 remind = meetingPool[meetingUUID]!!.remind
                 note = meetingPool[meetingUUID]!!.notePool[userUUID]
+                languageId = meetingPool[meetingUUID]!!.languageId
             }
         )
 
@@ -194,8 +211,7 @@ class WebRTCHandler(private val storeService: StoreService) : TextWebSocketHandl
             }
 
         }
-        addOnlineCount()
-        logger.info { "$userUUID: Connect $meetingUUID meeting, the current number is $onlineNum" }
+        logger.info { "[Connect]\nmeeting: $meetingUUID\nuser: $userUUID\nonline: ${meetingPool[meetingUUID]!!.sessionPool.size}\n" }
     }
 
     /**
@@ -206,7 +222,6 @@ class WebRTCHandler(private val storeService: StoreService) : TextWebSocketHandl
         val userUUID = session.getUserUUID()
         val doc = meetingPool[meetingUUID]!!.document.content.toByteArray()
         val note = meetingPool[meetingUUID]!!.notePool[userUUID]?.toByteArray()
-        logger.info { "$userUUID: Disconnect" }
         meetingPool[meetingUUID]!!.sessionPool.remove(userUUID)
         storeService.onQuit(userUUID, meetingUUID, doc, note)
         broadcast(
@@ -215,15 +230,12 @@ class WebRTCHandler(private val storeService: StoreService) : TextWebSocketHandl
             JoinSignal().copyFrom(session.getUser()),
             excludeSessionId = session.id
         )
-        subOnlineCount()
+        logger.info { "[Disconnect]\nmeeting: $meetingUUID\nuser: $userUUID\nonline: ${meetingPool[meetingUUID]!!.sessionPool.size}\n" }
     }
 
     companion object {
 
-        // 静态变量，用来记录当前在线连接数。应该把它设计成线程安全的。
-        private val onlineNum = AtomicInteger()
-
-        // concurrent包的线程安全Set，用来存放每个客户端对应的WebSocketServer对象。
+        private val logger = KotlinLogging.logger {}
         private val meetingPool = ConcurrentHashMap<String, MeetingDO>()
 
         /**
@@ -250,6 +262,7 @@ class WebRTCHandler(private val storeService: StoreService) : TextWebSocketHandl
          * Forward a [message] to all session but [excludeSessionId].
          */
         fun forward(meetingUUID: String, message: WebSocketMessage<*>, excludeSessionId: String? = null) {
+            logger.info { "[Forward]\nmeeting: $meetingUUID\nsend: ${message.payload}\n" }
             sandMessage(meetingUUID, message, excludeSessionId = excludeSessionId)
         }
 
@@ -257,6 +270,7 @@ class WebRTCHandler(private val storeService: StoreService) : TextWebSocketHandl
          * Broadcast a [signal] to all session but [excludeSessionId].
          */
         fun broadcast(meetingUUID: String, signal: String, data: Any?, excludeSessionId: String? = null) {
+            logger.info { "[Broadcast]\nmeeting: $meetingUUID\nsignal: $signal\nsend: $data\n" }
             sandMessage(
                 meetingUUID,
                 TextMessage(SignalFactory.create(signal, data).toJson()),
@@ -268,25 +282,14 @@ class WebRTCHandler(private val storeService: StoreService) : TextWebSocketHandl
          * Send a [signal] to [targetSessionId].
          */
         fun emit(meetingUUID: String, targetSessionId: String, signal: String, data: Any) {
+            if (signal != Event.HEARTBEAT) {
+                logger.info { "[Emit]\nmeeting: $meetingUUID\nsignal: $signal\nsend: $data\n" }
+            }
             sandMessage(
                 meetingUUID,
                 TextMessage(SignalFactory.create(signal, data).toJson()),
                 targetSessionId = targetSessionId
             )
-        }
-
-        /**
-         * 添加链接人数
-         */
-        fun addOnlineCount() {
-            onlineNum.incrementAndGet()
-        }
-
-        /**
-         * 移除链接人数
-         */
-        fun subOnlineCount() {
-            onlineNum.decrementAndGet()
         }
     }
 }

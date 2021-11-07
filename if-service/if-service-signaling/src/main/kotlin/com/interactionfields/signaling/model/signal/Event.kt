@@ -13,6 +13,7 @@ object Event {
     const val JUDGE_RESULT_RECEIVE = "judgeResultReceive"
     const val ACK = "ack"
     const val CONNECTED = "connected"
+    const val HEARTBEAT = "heartbeat"
     const val OPERATION = "operation"
     const val REMIND = "remind"
     const val HIDDEN = "hidden"

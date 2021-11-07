@@ -16,5 +16,6 @@ data class MeetingDO(
     var sessionPool: ConcurrentHashMap<String, WebSocketSession> = ConcurrentHashMap(),
     var notePool: ConcurrentHashMap<String, String> = ConcurrentHashMap(),
     var document: Document = Document("", CopyOnWriteArrayList(listOf(TextOperation()))),
-    var remind: LocalDateTime? = null
+    var remind: LocalDateTime? = null,
+    var languageId: Int? = 1
 )

@@ -87,7 +87,6 @@ class TextOperation {
     fun apply(doc: String): String {
         var i = 0
         val parts = mutableListOf<Any>()
-        println("i=$i, doc.length=${doc.length}, doc=$doc")
         ops.forEach {
             if (it is String && isInsert(it)) {
                 parts.add(it)
@@ -108,7 +107,6 @@ class TextOperation {
                 }
             }
         }
-        println("i=$i, doc.length=${doc.length}, doc=$doc, parts=${parts.joinToString(separator = "")}")
         Assert.isTrue(
             i == doc.length,
             "Cannot apply operation: operation is too short."
@@ -153,7 +151,6 @@ class TextOperation {
         var b: Any? = null
         var i = 1
         while (true) {
-            println("while: ${i++}")
             if (a == null) a = if (iterA.hasNext()) iterA.next() else null
             if (b == null) b = if (iterB.hasNext()) iterB.next() else null
             // end condition: both operations have been processed

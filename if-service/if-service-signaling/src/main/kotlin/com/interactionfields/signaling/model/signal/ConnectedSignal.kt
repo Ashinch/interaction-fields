@@ -7,4 +7,5 @@ data class ConnectedSignal(
     var version: Int? = null,
     var remind: LocalDateTime? = null,
     var note: String? = null,
+    var languageId: Int? = null,
 )
