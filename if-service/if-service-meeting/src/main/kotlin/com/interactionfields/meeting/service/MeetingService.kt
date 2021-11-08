@@ -75,6 +75,15 @@ class MeetingService(
     }
 
     /**
+     * Get the status of the ongoing meeting by using user uuid.
+     */
+    fun getStatusByUser(): MeetingStatusVO? {
+        val uuid = contextAuthPrincipal.getUuid()!!
+        val meeting = db.meetings.find { (it.creatorUUID eq uuid).and(it.endAt.isNull()) } ?: return null
+        return MeetingStatusVO().copyFrom(meeting).apply { attachmentType = db.attachmentType.toList() }
+    }
+
+    /**
      * Generated a 6-digit meeting invitation code. Invitation
      * codes cannot be the same as those for an ongoing meeting.
      */

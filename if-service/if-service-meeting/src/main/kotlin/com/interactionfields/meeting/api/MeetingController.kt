@@ -9,7 +9,9 @@ import com.interactionfields.meeting.model.param.RecordParam
 import com.interactionfields.meeting.service.MeetingService
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 import javax.validation.Valid
 
 @Validated
@@ -27,17 +29,17 @@ class MeetingController(private val meetingService: MeetingService) {
         return R.judge(meetingService.create(createMeetingDTO))
     }
 
-    @GetMapping("/statusByCode/{code}")
+    @PostMapping("/statusByCode")
     @PreAuthorize(HasAuthority.USER)
-    fun codeStatus(@PathVariable code: String): R {
+    fun statusByCode(code: String): R {
         return R.judge(meetingService.getStatusByCode(code))
     }
 
-//    @PostMapping("/join")
-//    @PreAuthorize(HasAuthority.USER)
-//    fun join(): R {
-//        return R.judge(meetingService.create(CreateMeetingDTO("", "")), "create error")
-//    }
+    @PostMapping("/statusByUser")
+    @PreAuthorize(HasAuthority.USER)
+    fun statusByUser(): R {
+        return R.success(meetingService.getStatusByUser())
+    }
 
     @PostMapping("/record")
     @PreAuthorize(HasAuthority.USER)
