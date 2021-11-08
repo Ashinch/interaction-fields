@@ -13,7 +13,6 @@ import com.interactionfields.signaling.ot.Operation
 import com.interactionfields.signaling.ot.TextOperation
 import com.interactionfields.signaling.service.StoreService
 import mu.KotlinLogging
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter.event
 import org.springframework.web.socket.CloseStatus
 import org.springframework.web.socket.TextMessage
 import org.springframework.web.socket.WebSocketMessage
@@ -290,6 +289,13 @@ class WebRTCHandler(private val storeService: StoreService) : TextWebSocketHandl
                 TextMessage(SignalFactory.create(signal, data).toJson()),
                 targetSessionId = targetSessionId
             )
+        }
+
+        fun getOnlineMember(meetingUUID: String): Int =
+            meetingPool[meetingUUID]?.sessionPool?.size ?: 0
+
+        fun ensureSingleConnection(meetingUUID: String, userUUID: String) {
+            meetingPool[meetingUUID]?.sessionPool?.get(userUUID)?.close(CloseStatus.SERVICE_OVERLOAD)
         }
     }
 }
