@@ -20,7 +20,7 @@ import java.time.LocalDateTime
 class StoreService(private val db: Database) {
 
     fun getMeeting(code: String): Meeting? =
-        db.meetings.find { (it.code eq MeetingRepository.code).and(it.endAt.isNull()) }
+        db.meetings.find { (it.code eq code).and(it.endAt.isNull()) }
 
     fun getUser(uuid: String): User? =
         db.users.find { it.uuid eq uuid }

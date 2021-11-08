@@ -33,11 +33,11 @@ class MeetingController(private val meetingService: MeetingService) {
         return R.judge(meetingService.getStatusByCode(code))
     }
 
-    @PostMapping("/join")
-    @PreAuthorize(HasAuthority.USER)
-    fun join(): R {
-        return R.judge(meetingService.create(CreateMeetingDTO("", "")), "create error")
-    }
+//    @PostMapping("/join")
+//    @PreAuthorize(HasAuthority.USER)
+//    fun join(): R {
+//        return R.judge(meetingService.create(CreateMeetingDTO("", "")), "create error")
+//    }
 
     @PostMapping("/record")
     @PreAuthorize(HasAuthority.USER)

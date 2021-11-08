@@ -58,13 +58,13 @@ class JudgeService(
     fun getRecord(meetingUUID: String, drop: Int, take: Int): RecordVO =
         RecordVO().apply {
             records = db.attachments
-                .filter { it.meetingUUID eq AttachmentRepository.meetingUUID }
+                .filter { it.meetingUUID eq meetingUUID}
                 .sortedBy { it.createAt.desc() }
                 .drop(drop)
                 .take(take)
                 .map { AttachmentsVO().copyFrom(it) }
             total = ceil(db.attachments
-                .filter { it.meetingUUID eq AttachmentRepository.meetingUUID }
+                .filter { it.meetingUUID eq meetingUUID }
                 .totalRecords / take.toDouble()).toInt()
         }
 

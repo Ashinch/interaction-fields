@@ -6,6 +6,7 @@ data class MeetingVO(
     var uuid: String? = null,
     var creatorUUID: String? = null,
     var title: String? = null,
+    var code: String? = null,
     var doc: String? = null,
     var note: String? = null,
     var joinAt: LocalDateTime? = null,
