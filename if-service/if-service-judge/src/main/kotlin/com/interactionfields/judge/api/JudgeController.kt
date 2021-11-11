@@ -5,6 +5,7 @@ import com.interactionfields.common.response.R
 import com.interactionfields.judge.model.param.CommitParam
 import com.interactionfields.judge.model.param.RecordParam
 import com.interactionfields.judge.service.JudgeService
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
@@ -34,10 +35,12 @@ class JudgeController(private val judgeService: JudgeService) {
         ))
 
     @GetMapping("/binary/{attachmentUUID}")
+    @Cacheable(cacheNames = ["judge.binary"], key = "#attachmentUUID", condition = "#attachmentUUID.length > 0")
     fun getBinary(@PathVariable attachmentUUID: String): R =
         R.judge(judgeService.getBinary(attachmentUUID))
 
     @GetMapping("/result/{attachmentUUID}")
+    @Cacheable(cacheNames = ["judge.result"], key = "#attachmentUUID", condition = "#attachmentUUID.length > 0")
     fun getResult(@PathVariable attachmentUUID: String): R =
         R.judge(judgeService.getResult(attachmentUUID))
 }

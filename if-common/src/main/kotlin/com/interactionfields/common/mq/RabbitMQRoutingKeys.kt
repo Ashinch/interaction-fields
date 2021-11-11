@@ -8,6 +8,8 @@ package com.interactionfields.common.mq
  */
 object RabbitMQRoutingKeys {
 
-    const val MEETING_JUDGE_COMMIT = "meeting.judge.commit"
-    const val MEETING_JUDGE_RESULT = "meeting.judge.result"
+    const val JUDGE_COMMIT = "judge.commit"
+    const val JUDGE_RESULT = "judge.result"
+
+    const val MEETING_CLOSE = "meeting.close"
 }

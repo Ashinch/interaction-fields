@@ -29,6 +29,12 @@ class MeetingController(private val meetingService: MeetingService) {
         return R.judge(meetingService.create(createMeetingDTO))
     }
 
+    @PostMapping("/close")
+    @PreAuthorize(HasAuthority.USER)
+    fun close(): R {
+        return R.judge(meetingService.close(contextAuthPrincipal.getUuid()!!))
+    }
+
     @PostMapping("/statusByCode")
     @PreAuthorize(HasAuthority.USER)
     fun statusByCode(code: String): R {

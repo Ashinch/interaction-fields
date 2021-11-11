@@ -1,5 +1,7 @@
 package com.interactionfields.common.response
 
+import java.io.Serializable
+
 /**
  * The wrapper class of the response result.
  *
@@ -22,7 +24,7 @@ data class R private constructor(
     val code: Int?,
     var msg: String?,
     val data: Any?,
-) {
+) : Serializable {
 
     companion object {
 

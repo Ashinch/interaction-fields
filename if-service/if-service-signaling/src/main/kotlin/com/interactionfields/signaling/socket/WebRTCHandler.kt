@@ -13,6 +13,7 @@ import com.interactionfields.signaling.ot.Operation
 import com.interactionfields.signaling.ot.TextOperation
 import com.interactionfields.signaling.service.StoreService
 import mu.KotlinLogging
+import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.web.socket.CloseStatus
 import org.springframework.web.socket.TextMessage
 import org.springframework.web.socket.WebSocketMessage
@@ -22,6 +23,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler
 import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.TimeUnit
 
 /**
  * BroadcastController server of WebRTC.
@@ -29,7 +31,10 @@ import java.util.concurrent.CopyOnWriteArrayList
  * @author Ashinch
  * @date 2021/08/31
  */
-class WebRTCHandler(private val storeService: StoreService) : TextWebSocketHandler() {
+class WebRTCHandler(
+    private val storeService: StoreService,
+    private val redisTemplate: StringRedisTemplate
+) : TextWebSocketHandler() {
 
     override fun handleMessage(session: WebSocketSession, message: WebSocketMessage<*>) {
         val meetingUUID = session.getMeetingUUID()
@@ -156,7 +161,7 @@ class WebRTCHandler(private val storeService: StoreService) : TextWebSocketHandl
     }
 
     private fun onHeartbeat(meetingUUID: String, sessionId: String, timestamp: Long) {
-        emit(meetingUUID, sessionId, Event.HEARTBEAT, System.currentTimeMillis() - timestamp)
+        emit(meetingUUID, sessionId, Event.HEARTBEAT, timestamp)
     }
 
     /**
@@ -211,6 +216,7 @@ class WebRTCHandler(private val storeService: StoreService) : TextWebSocketHandl
 
         }
         logger.info { "[Connect]\nmeeting: $meetingUUID\nuser: $userUUID\nonline: ${meetingPool[meetingUUID]!!.sessionPool.size}\n" }
+        redisTemplate.delete("meeting.close.$meetingUUID")
     }
 
     /**
@@ -230,6 +236,10 @@ class WebRTCHandler(private val storeService: StoreService) : TextWebSocketHandl
             excludeSessionId = session.id
         )
         logger.info { "[Disconnect]\nmeeting: $meetingUUID\nuser: $userUUID\nonline: ${meetingPool[meetingUUID]!!.sessionPool.size}\n" }
+        if (getOnlineMember(meetingUUID) <= 0) {
+            redisTemplate.opsForValue().set("meeting.close.$meetingUUID", LocalDateTime.now().toString())
+            redisTemplate.expire("meeting.close.$meetingUUID", 10L, TimeUnit.MINUTES)
+        }
     }
 
     companion object {

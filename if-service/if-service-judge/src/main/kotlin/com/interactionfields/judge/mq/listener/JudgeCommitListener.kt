@@ -36,10 +36,10 @@ class JudgeCommitListener(
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Consume an [RabbitMQRoutingKeys.MEETING_JUDGE_COMMIT] message,
+     * Consume an [RabbitMQRoutingKeys.JUDGE_COMMIT] message,
      * receive an attachment, call compile.sh to compile and run it,
      * and send the [CommitResultDTO] to
-     * the [RabbitMQRoutingKeys.MEETING_JUDGE_RESULT] consumer.
+     * the [RabbitMQRoutingKeys.JUDGE_RESULT] consumer.
      */
     @RabbitHandler
     @RabbitListener(
@@ -51,7 +51,7 @@ class JudgeCommitListener(
                 type = ExchangeTypes.TOPIC,
                 ignoreDeclarationExceptions = Exchange.TRUE
             ),
-            key = [RabbitMQRoutingKeys.MEETING_JUDGE_COMMIT]
+            key = [RabbitMQRoutingKeys.JUDGE_COMMIT]
         )]
     )
     fun onMessage(msg: Message<Any>, channel: Channel) {
@@ -122,7 +122,7 @@ class JudgeCommitListener(
             // Send the result to the consumer
             rabbitTemplate.defaultConvertAndSend(
                 RabbitMQExchanges.JUDGE,
-                RabbitMQRoutingKeys.MEETING_JUDGE_RESULT,
+                RabbitMQRoutingKeys.JUDGE_RESULT,
                 commitResultDTO,
                 mapOf("meetingUUID" to msg.headers["meetingUUID"]!!)
             )

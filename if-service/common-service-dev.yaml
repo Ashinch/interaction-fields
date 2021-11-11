@@ -15,8 +15,12 @@ spring:
     host: 127.0.0.1
     port: 6379
     password: 276364092
+  cache:
+    redis:
+      time-to-live: 600000
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
   cloud:
     nacos:
       discovery:

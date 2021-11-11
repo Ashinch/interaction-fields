@@ -7,9 +7,7 @@ import com.interactionfields.common.extension.uuid36
 import com.interactionfields.common.mq.RabbitMQExchanges
 import com.interactionfields.common.mq.RabbitMQExt.defaultConvertAndSend
 import com.interactionfields.common.mq.RabbitMQRoutingKeys
-import com.interactionfields.common.repository.AttachmentRepository
 import com.interactionfields.common.repository.AttachmentRepository.attachments
-import com.interactionfields.common.repository.MeetingRepository.meetings
 import com.interactionfields.judge.model.vo.AttachmentsVO
 import com.interactionfields.judge.model.vo.RecordVO
 import mu.KotlinLogging
@@ -32,7 +30,7 @@ class JudgeService(
 
     /**
      * Add an attachment and send it to
-     * the [RabbitMQRoutingKeys.MEETING_JUDGE_COMMIT] consumer.
+     * the [RabbitMQRoutingKeys.JUDGE_COMMIT] consumer.
      */
     fun commit(meetingUUID: String, typeID: Int, binary: String): Boolean {
         val attachment = Attachment().apply {
@@ -45,7 +43,7 @@ class JudgeService(
         if (db.attachments.add(attachment) <= 0) return false
         rabbitTemplate.defaultConvertAndSend(
             RabbitMQExchanges.JUDGE,
-            RabbitMQRoutingKeys.MEETING_JUDGE_COMMIT,
+            RabbitMQRoutingKeys.JUDGE_COMMIT,
             attachment,
             mapOf("meetingUUID" to meetingUUID)
         )

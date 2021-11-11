@@ -9,4 +9,5 @@ package com.interactionfields.common.mq
 object RabbitMQExchanges {
 
     const val JUDGE = "exchange-judge"
+    const val MEETING = "exchange-meeting"
 }

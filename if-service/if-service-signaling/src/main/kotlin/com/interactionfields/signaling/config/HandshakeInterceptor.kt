@@ -34,17 +34,16 @@ class HandshakeInterceptor(private val storeService: StoreService) : HandshakeIn
         val code = serverHttpRequest.servletRequest.getParameter("code")
         val uuid = contextAuthPrincipal.getUuid()!!
 
-        // Check code
+        // Verify invitation code
         val meeting = storeService.getMeeting(code) ?: return false
         WebRTCHandler.ensureSingleConnection(meeting.uuid, uuid)
         if (WebRTCHandler.getOnlineMember(meeting.uuid) >= 2) return false
 
-        // Check uuid
+        // Verify user uuid
         val user = storeService.getUser(uuid) ?: return false
 
         attributes[SessionExt.MEETING_UUID] = meeting.uuid
         attributes[SessionExt.USER] = user
-        // Verify the invitation code
         logger.info { "$uuid: Handshake $code meeting" }
         return true
     }

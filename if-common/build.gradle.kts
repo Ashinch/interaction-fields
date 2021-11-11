@@ -40,6 +40,7 @@ dependencies {
 
     // Spring Boot
     api("org.springframework.boot:spring-boot-starter-jdbc")
+    api("org.springframework.boot:spring-boot-starter-data-redis")
     api("org.springframework.boot:spring-boot-starter-web")
     api("org.springframework.boot:spring-boot-starter-validation")
     api("org.springframework.boot:spring-boot-starter-aop")

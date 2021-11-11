@@ -20,4 +20,5 @@ object Event {
     const val NOTE = "note"
     const val JOIN = "join"
     const val QUIT = "quit"
+    const val CLOSE = "close"
 }

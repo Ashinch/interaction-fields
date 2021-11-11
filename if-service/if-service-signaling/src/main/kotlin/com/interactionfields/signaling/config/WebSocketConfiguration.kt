@@ -4,6 +4,7 @@ import com.interactionfields.signaling.service.StoreService
 import com.interactionfields.signaling.socket.WebRTCHandler
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.web.socket.config.annotation.EnableWebSocket
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
@@ -17,9 +18,10 @@ import org.springframework.web.socket.server.standard.ServletServerContainerFact
  */
 @Configuration
 @EnableWebSocket
-class WebSocketConfigurer(
+class WebSocketConfiguration(
     private val handshakeInterceptor: HandshakeInterceptor,
-    private val storeService: StoreService
+    private val storeService: StoreService,
+    private val redisTemplate: StringRedisTemplate
 ) : WebSocketConfigurer {
 
     private val MAX_MESSAGE_SIZE = 20 * 1024
@@ -39,7 +41,7 @@ class WebSocketConfigurer(
      */
     override fun registerWebSocketHandlers(webSocketHandlerRegistry: WebSocketHandlerRegistry) {
         webSocketHandlerRegistry
-            .addHandler(WebRTCHandler(storeService), "/webrtc")
+            .addHandler(WebRTCHandler(storeService, redisTemplate), "/webrtc")
             .setAllowedOrigins("*")
             .addInterceptors(handshakeInterceptor)
     }

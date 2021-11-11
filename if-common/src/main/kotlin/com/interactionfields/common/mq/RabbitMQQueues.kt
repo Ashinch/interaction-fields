@@ -10,4 +10,5 @@ object RabbitMQQueues {
 
     const val JUDGE_RESULT = "queue-judge-result"
     const val JUDGE_COMMIT = "queue-judge-commit"
+    const val MEETING_CLOSE = "queue-meeting-close"
 }

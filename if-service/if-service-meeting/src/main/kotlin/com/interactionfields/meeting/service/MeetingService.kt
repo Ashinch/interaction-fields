@@ -6,6 +6,9 @@ import com.interactionfields.auth.common.util.contextAuthPrincipal
 import com.interactionfields.common.domain.Meeting
 import com.interactionfields.common.extension.ObjectExt.copyFrom
 import com.interactionfields.common.extension.uuid6U
+import com.interactionfields.common.mq.RabbitMQExchanges
+import com.interactionfields.common.mq.RabbitMQExt.defaultConvertAndSend
+import com.interactionfields.common.mq.RabbitMQRoutingKeys
 import com.interactionfields.common.repository.AttachmentTypeRepository.attachmentType
 import com.interactionfields.common.repository.MeetingRepository
 import com.interactionfields.common.repository.MeetingRepository.meetings
@@ -20,6 +23,7 @@ import org.ktorm.dsl.*
 import org.ktorm.entity.add
 import org.ktorm.entity.find
 import org.ktorm.entity.toList
+import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.stereotype.Service
 import org.springframework.util.Assert
 import java.time.LocalDateTime
@@ -30,6 +34,7 @@ import kotlin.math.ceil
 //@Transactional(rollbackFor = [Exception::class])
 class MeetingService(
     private val db: Database,
+    private val rabbitTemplate: RabbitTemplate,
     private val nacosServiceManager: NacosServiceManager,
     private val nacosDiscoveryProperties: NacosDiscoveryProperties,
 ) {
@@ -54,6 +59,20 @@ class MeetingService(
         }
         Assert.isTrue(db.meetings.add(meeting) > 0, "Create meeting error")
         return MeetingVO().copyFrom(meeting)
+    }
+
+    fun close(uuid: String): Boolean {
+        val meeting = db.meetings.find { (it.creatorUUID eq uuid).and(it.endAt.isNull()) }
+        Assert.notNull(meeting, "You don't have an ongoing meeting")
+        meeting!!.endAt = LocalDateTime.now()
+        meeting.flushChanges()
+        rabbitTemplate.defaultConvertAndSend(
+            RabbitMQExchanges.MEETING,
+            RabbitMQRoutingKeys.MEETING_CLOSE,
+            meeting.uuid,
+            null
+        )
+        return true
     }
 
     /**
