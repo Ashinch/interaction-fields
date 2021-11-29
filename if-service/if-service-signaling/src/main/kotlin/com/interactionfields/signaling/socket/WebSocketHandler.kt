@@ -6,7 +6,7 @@ import com.interactionfields.common.extension.ObjectExt.copyFrom
 import com.interactionfields.signaling.extension.SessionExt.getMeetingUUID
 import com.interactionfields.signaling.extension.SessionExt.getUser
 import com.interactionfields.signaling.extension.SessionExt.getUserUUID
-import com.interactionfields.signaling.model.MeetingDO
+import com.interactionfields.signaling.model.MeetingShare
 import com.interactionfields.signaling.model.dto.*
 import com.interactionfields.signaling.model.signal.*
 import com.interactionfields.signaling.ot.Operation
@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit
  * @author Ashinch
  * @date 2021/08/31
  */
-class WebRTCHandler(
+class WebSocketHandler(
     private val storeService: StoreService,
     private val redisTemplate: StringRedisTemplate
 ) : TextWebSocketHandler() {
@@ -172,7 +172,7 @@ class WebRTCHandler(
         val meetingUUID = session.getMeetingUUID()
         val userUUID = session.getUserUUID()
 
-        meetingPool[meetingUUID] = meetingPool[meetingUUID] ?: MeetingDO()
+        meetingPool[meetingUUID] = meetingPool[meetingUUID] ?: MeetingShare()
         meetingPool[meetingUUID]!!.sessionPool[userUUID] = ConcurrentWebSocketSessionDecorator(session, 2000, 4096)
 
 
@@ -245,7 +245,7 @@ class WebRTCHandler(
     companion object {
 
         private val logger = KotlinLogging.logger {}
-        private val meetingPool = ConcurrentHashMap<String, MeetingDO>()
+        private val meetingPool = ConcurrentHashMap<String, MeetingShare>()
 
         /**
          * Send a [message] to [targetSessionId]

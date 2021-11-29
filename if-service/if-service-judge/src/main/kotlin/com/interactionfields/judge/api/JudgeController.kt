@@ -22,8 +22,8 @@ class JudgeController(private val judgeService: JudgeService) {
         R.judge(judgeService.commit(
             commitParam.meetingUUID,
             commitParam.typeID,
-            commitParam.code)
-        )
+            commitParam.code
+        ))
 
     @PostMapping("/record")
     @PreAuthorize(HasAuthority.USER)

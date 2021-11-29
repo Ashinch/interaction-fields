@@ -6,7 +6,7 @@ import com.interactionfields.common.mq.RabbitMQQueues
 import com.interactionfields.common.mq.RabbitMQRoutingKeys
 import com.interactionfields.signaling.model.signal.Event
 import com.interactionfields.signaling.model.signal.Signal
-import com.interactionfields.signaling.socket.WebRTCHandler
+import com.interactionfields.signaling.socket.WebSocketHandler
 import com.rabbitmq.client.Channel
 import mu.KotlinLogging
 import org.springframework.amqp.core.ExchangeTypes
@@ -45,7 +45,7 @@ class JudgeResultListener {
     )
     fun onMessage(msg: Message<Any>, channel: Channel) {
         logger.info { "Messages are received: $msg" }
-        WebRTCHandler.broadcast(
+        WebSocketHandler.broadcast(
             msg.headers["meetingUUID"].toString(),
             Event.JUDGE_RESULT_RECEIVE,
             msg.payload

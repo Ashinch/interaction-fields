@@ -7,7 +7,7 @@ import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
-data class MeetingDO(
+data class MeetingShare(
 
     /**
      * userUUID: [String]

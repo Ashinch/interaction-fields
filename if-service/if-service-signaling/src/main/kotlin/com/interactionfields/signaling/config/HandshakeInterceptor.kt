@@ -3,7 +3,7 @@ package com.interactionfields.signaling.config
 import com.interactionfields.auth.common.util.contextAuthPrincipal
 import com.interactionfields.signaling.extension.SessionExt
 import com.interactionfields.signaling.service.StoreService
-import com.interactionfields.signaling.socket.WebRTCHandler
+import com.interactionfields.signaling.socket.WebSocketHandler
 import mu.KotlinLogging
 import org.springframework.http.server.ServerHttpRequest
 import org.springframework.http.server.ServerHttpResponse
@@ -36,8 +36,8 @@ class HandshakeInterceptor(private val storeService: StoreService) : HandshakeIn
 
         // Verify invitation code
         val meeting = storeService.getMeeting(code) ?: return false
-        WebRTCHandler.ensureSingleConnection(meeting.uuid, uuid)
-        if (WebRTCHandler.getOnlineMember(meeting.uuid) >= 2) return false
+        WebSocketHandler.ensureSingleConnection(meeting.uuid, uuid)
+        if (WebSocketHandler.getOnlineMember(meeting.uuid) >= 2) return false
 
         // Verify user uuid
         val user = storeService.getUser(uuid) ?: return false

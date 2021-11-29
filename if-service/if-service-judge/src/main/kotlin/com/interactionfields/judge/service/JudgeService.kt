@@ -32,11 +32,11 @@ class JudgeService(
      * Add an attachment and send it to
      * the [RabbitMQRoutingKeys.JUDGE_COMMIT] consumer.
      */
-    fun commit(meetingUUID: String, typeID: Int, binary: String): Boolean {
+    fun commit(mUUID: String, typeID: Int, sourceCode: String): Boolean {
         val attachment = Attachment().apply {
             uuid = uuid36
-            this.meetingUUID = meetingUUID
-            this.binary = binary.toByteArray()
+            meetingUUID = mUUID
+            binary = sourceCode.toByteArray()
             type = AttachmentType().apply { id = typeID }
             createAt = LocalDateTime.now()
         }
@@ -45,7 +45,7 @@ class JudgeService(
             RabbitMQExchanges.JUDGE,
             RabbitMQRoutingKeys.JUDGE_COMMIT,
             attachment,
-            mapOf("meetingUUID" to meetingUUID)
+            mapOf("meetingUUID" to mUUID)
         )
         return true
     }

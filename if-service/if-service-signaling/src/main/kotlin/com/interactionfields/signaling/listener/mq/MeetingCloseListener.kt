@@ -5,7 +5,7 @@ import com.interactionfields.common.mq.RabbitMQExt.defaultAck
 import com.interactionfields.common.mq.RabbitMQQueues
 import com.interactionfields.common.mq.RabbitMQRoutingKeys
 import com.interactionfields.signaling.model.signal.Event
-import com.interactionfields.signaling.socket.WebRTCHandler
+import com.interactionfields.signaling.socket.WebSocketHandler
 import com.rabbitmq.client.Channel
 import mu.KotlinLogging
 import org.springframework.amqp.core.ExchangeTypes
@@ -40,7 +40,7 @@ class MeetingCloseListener {
     )
     fun onMessage(msg: Message<Any>, channel: Channel) {
         logger.info { "Messages are received: $msg" }
-        WebRTCHandler.broadcast(
+        WebSocketHandler.broadcast(
             msg.payload.toString(),
             Event.CLOSE,
             null

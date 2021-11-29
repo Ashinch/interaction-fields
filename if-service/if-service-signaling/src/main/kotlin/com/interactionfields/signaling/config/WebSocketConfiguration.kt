@@ -1,7 +1,7 @@
 package com.interactionfields.signaling.config
 
 import com.interactionfields.signaling.service.StoreService
-import com.interactionfields.signaling.socket.WebRTCHandler
+import com.interactionfields.signaling.socket.WebSocketHandler
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.redis.core.StringRedisTemplate
@@ -41,7 +41,7 @@ class WebSocketConfiguration(
      */
     override fun registerWebSocketHandlers(webSocketHandlerRegistry: WebSocketHandlerRegistry) {
         webSocketHandlerRegistry
-            .addHandler(WebRTCHandler(storeService, redisTemplate), "/webrtc")
+            .addHandler(WebSocketHandler(storeService, redisTemplate), "/webrtc")
             .setAllowedOrigins("*")
             .addInterceptors(handshakeInterceptor)
     }
