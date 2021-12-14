@@ -9,7 +9,6 @@ import org.springframework.http.server.ServerHttpRequest
 import org.springframework.http.server.ServerHttpResponse
 import org.springframework.http.server.ServletServerHttpRequest
 import org.springframework.stereotype.Component
-import org.springframework.web.socket.WebSocketHandler
 import org.springframework.web.socket.server.HandshakeInterceptor
 
 /**
@@ -28,7 +27,7 @@ class HandshakeInterceptor(private val storeService: StoreService) : HandshakeIn
      */
     override fun beforeHandshake(
         request: ServerHttpRequest, response: ServerHttpResponse,
-        wsHandler: WebSocketHandler, attributes: MutableMap<String, Any>
+        wsHandler: org.springframework.web.socket.WebSocketHandler, attributes: MutableMap<String, Any>
     ): Boolean {
         val serverHttpRequest = request as ServletServerHttpRequest
         val code = serverHttpRequest.servletRequest.getParameter("code")
@@ -53,7 +52,7 @@ class HandshakeInterceptor(private val storeService: StoreService) : HandshakeIn
      */
     override fun afterHandshake(
         request: ServerHttpRequest, response: ServerHttpResponse,
-        wsHandler: WebSocketHandler, exception: Exception?
+        wsHandler: org.springframework.web.socket.WebSocketHandler, exception: Exception?
     ) {
     }
 }

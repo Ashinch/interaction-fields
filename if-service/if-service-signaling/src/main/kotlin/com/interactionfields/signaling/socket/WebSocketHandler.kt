@@ -114,7 +114,7 @@ class WebSocketHandler(
         val concurrentOperations = CopyOnWriteArrayList(doc.operations.slice(op.version until doc.operations.size))
 
         // ... and transform the operation against all these operations ...
-        var operation = TextOperation(op.op)
+        var operation = TextOperation(op.ops)
         concurrentOperations.forEach {
             operation = TextOperation.transform(operation, it)[0]
         }
