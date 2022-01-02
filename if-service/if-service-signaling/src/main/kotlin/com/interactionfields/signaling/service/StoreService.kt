@@ -16,6 +16,12 @@ import org.ktorm.entity.find
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 
+/**
+ * Persisting the meeting process.
+ *
+ * @author Ashinch
+ * @date 2022/01/02
+ */
 @Service
 class StoreService(private val db: Database) {
 

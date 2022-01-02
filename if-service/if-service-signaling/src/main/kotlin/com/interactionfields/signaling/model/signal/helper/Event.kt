@@ -1,4 +1,4 @@
-package com.interactionfields.signaling.model.signal
+package com.interactionfields.signaling.model.signal.helper
 
 object Event {
 
@@ -15,6 +15,8 @@ object Event {
     const val CONNECTED = "connected"
     const val HEARTBEAT = "heartbeat"
     const val OPERATION = "operation"
+    const val PULL_DOCUMENT = "pullDocument"
+    const val PULL_NOTE = "pullNote"
     const val REMIND = "remind"
     const val HIDDEN = "hidden"
     const val NOTE = "note"

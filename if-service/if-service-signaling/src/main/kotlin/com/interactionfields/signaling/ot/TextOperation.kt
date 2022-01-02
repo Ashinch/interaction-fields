@@ -4,12 +4,9 @@ import org.springframework.util.Assert
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.min
 
-class TextOperation {
-    constructor(list: List<Any>? = null) {
-        this.ops = CopyOnWriteArrayList(list ?: listOf())
-    }
+class TextOperation(list: List<Any>? = null) {
 
-    var ops = CopyOnWriteArrayList<Any>()
+    var ops = CopyOnWriteArrayList(list ?: listOf())
 
     /**
      * Returns the difference in length between the input and the output
@@ -218,9 +215,9 @@ class TextOperation {
         }
 
         /**
-         * Transform two operations a and b to a" and b" such that b" applied
-         * after a yields the same result as a" applied after b. Try to preserve
-         * the operations" intentions in the process.
+         * Transform two operations a and b to a` and b` such that b` applied
+         * after a yields the same result as a` applied after b. Try to preserve
+         * the intentions of the operations in the process.
          */
         fun transform(operationA: TextOperation, operationB: TextOperation): List<TextOperation> {
             val iterA = operationA.ops.iterator()

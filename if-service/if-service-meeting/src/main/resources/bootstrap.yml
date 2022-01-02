@@ -12,4 +12,4 @@ spring:
           group: IF_GROUP
           refresh: true
   profiles:
-    active: dev # 环境标识
+    active: dev

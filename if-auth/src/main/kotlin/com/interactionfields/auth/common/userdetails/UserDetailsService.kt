@@ -17,6 +17,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.stereotype.Service
+import java.time.LocalDateTime
 import java.util.*
 
 /**
@@ -54,6 +55,9 @@ class UserDetailsService(private val db: Database, private val authServiceRPC: A
         val base64Secret = Base64.getEncoder().encodeToString(serviceId.toByteArray())
         val jwt = authServiceRPC.getToken("Basic $base64Secret", "password", username, password)
             ?: throw BadCredentialsException(C.BAD_CREDENTIALS.msg)
+        // Refresh login date
+        user.joinAt = LocalDateTime.now()
+        user.flushChanges()
         // Setting UserDetailsDTO authorities
         return UserLoginVO(UserDetailsDTO().copyFrom(user).apply {
             authorities = db.userRoles

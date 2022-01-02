@@ -8,8 +8,11 @@ import com.interactionfields.signaling.extension.SessionExt.getUser
 import com.interactionfields.signaling.extension.SessionExt.getUserUUID
 import com.interactionfields.signaling.model.MeetingShare
 import com.interactionfields.signaling.model.dto.*
+import com.interactionfields.signaling.model.param.OperationParam
 import com.interactionfields.signaling.model.signal.*
-import com.interactionfields.signaling.ot.Operation
+import com.interactionfields.signaling.model.signal.helper.Event
+import com.interactionfields.signaling.model.signal.helper.Signal
+import com.interactionfields.signaling.model.signal.helper.SignalFactory
 import com.interactionfields.signaling.ot.TextOperation
 import com.interactionfields.signaling.service.StoreService
 import mu.KotlinLogging
@@ -88,6 +91,14 @@ class WebSocketHandler(
                         .toObj(HeartbeatSignalDTO::class.java) as HeartbeatSignalDTO).data!!)
                 }
 
+                Event.PULL_DOCUMENT -> {
+                    onPullDocument(meetingUUID, session.id)
+                }
+
+                Event.PULL_NOTE -> {
+                    onPullNote(meetingUUID, session.id, userUUID)
+                }
+
                 else -> return
             }
         }
@@ -102,7 +113,7 @@ class WebSocketHandler(
      * operation, applies it to the current document and returns the operation
      * to send to the clients.
      */
-    private fun onOperation(sessionId: String, meetingUUID: String, op: Operation) {
+    private fun onOperation(sessionId: String, meetingUUID: String, op: OperationParam) {
         val doc = meetingPool[meetingUUID]!!.document
         if (op.version!! < 0 || doc.operations.size < op.version) {
             logger.error { "operation revision not in history" }
@@ -133,7 +144,7 @@ class WebSocketHandler(
         broadcast(
             meetingUUID,
             Event.OPERATION,
-            OpsSignal().apply {
+            OperationSignal().apply {
                 version = doc.operations.size
                 ops = operation.ops
             },
@@ -164,11 +175,23 @@ class WebSocketHandler(
         emit(meetingUUID, sessionId, Event.HEARTBEAT, timestamp)
     }
 
+    private fun onPullDocument(meetingUUID: String, sessionId: String) {
+        emit(meetingUUID, sessionId, Event.PULL_DOCUMENT, PullDocumentSignal().apply {
+            content = meetingPool[meetingUUID]!!.document.content
+            version = meetingPool[meetingUUID]!!.document.operations.size
+        })
+    }
+
+    private fun onPullNote(meetingUUID: String, sessionId: String, userUUID: String) {
+        emit(meetingUUID, sessionId, Event.PULL_NOTE, PullNoteSignal().apply {
+            note = meetingPool[meetingUUID]!!.notePool[userUUID]
+        })
+    }
+
     /**
-     * 建立连接后应该在sessionPools中存储对应会议code的连接信息，
+     * Connected
      */
     override fun afterConnectionEstablished(session: WebSocketSession) {
-        // TODO: 重复链接处理？
         val meetingUUID = session.getMeetingUUID()
         val userUUID = session.getUserUUID()
 
@@ -290,7 +313,7 @@ class WebSocketHandler(
         /**
          * Send a [signal] to [targetSessionId].
          */
-        fun emit(meetingUUID: String, targetSessionId: String, signal: String, data: Any) {
+        fun emit(meetingUUID: String, targetSessionId: String, signal: String, data: Any?) {
             if (signal != Event.HEARTBEAT) {
                 logger.info { "[Emit]\nmeeting: $meetingUUID\nsignal: $signal\nsend: $data\n" }
             }
