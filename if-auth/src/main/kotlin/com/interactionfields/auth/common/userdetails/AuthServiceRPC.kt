@@ -21,4 +21,11 @@ interface AuthServiceRPC {
         @RequestParam("username") username: String,
         @RequestParam("password") password: String
     ): JWT?
+
+    @PostMapping("/oauth/token")
+    fun refreshToken(
+        @RequestHeader("Authorization") authorization: String,
+        @RequestParam("grant_type") grant_type: String? = "refresh_token",
+        @RequestParam("refresh_token") refreshToken: String
+    ): JWT?
 }

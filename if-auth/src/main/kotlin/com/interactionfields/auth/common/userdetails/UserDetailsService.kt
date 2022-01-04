@@ -1,6 +1,7 @@
 package com.interactionfields.auth.common.userdetails
 
 import com.interactionfields.auth.common.util.BCryptPasswordEncoderExt.matchesBCrypt
+import com.interactionfields.auth.common.util.clientAuthorization
 import com.interactionfields.common.domain.User
 import com.interactionfields.common.extension.ObjectExt.copyFrom
 import com.interactionfields.common.repository.UserRepository.users
@@ -18,7 +19,6 @@ import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
-import java.util.*
 
 /**
  * Implement Spring Security's [UserDetailsService] interface.
@@ -51,9 +51,7 @@ class UserDetailsService(private val db: Database, private val authServiceRPC: A
         val user = loadUserByUsernameInternal(username)
         if (!password.matchesBCrypt(user.password)) throw BadCredentialsException(C.BAD_CREDENTIALS.msg)
         // Get the JWT token from the authentication server
-        val serviceId = "client:276364092"
-        val base64Secret = Base64.getEncoder().encodeToString(serviceId.toByteArray())
-        val jwt = authServiceRPC.getToken("Basic $base64Secret", "password", username, password)
+        val jwt = authServiceRPC.getToken("Basic $clientAuthorization", "password", username, password)
             ?: throw BadCredentialsException(C.BAD_CREDENTIALS.msg)
         // Refresh login date
         user.joinAt = LocalDateTime.now()
@@ -64,6 +62,11 @@ class UserDetailsService(private val db: Database, private val authServiceRPC: A
                 .filter { it.userUUID eq user.uuid }
                 .map { it.role.name }
         }, jwt)
+    }
+
+    fun refreshToken(refreshToken: String): JWT {
+        return authServiceRPC.refreshToken("Basic $clientAuthorization", refreshToken = refreshToken)
+            ?: throw BadCredentialsException(C.BAD_CREDENTIALS.msg)
     }
 
     private fun loadUserByUsernameInternal(username: String?): User =

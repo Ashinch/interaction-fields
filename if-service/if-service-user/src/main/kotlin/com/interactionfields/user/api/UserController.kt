@@ -33,6 +33,11 @@ class UserController(
         return R.judge(userDetailsService.login(userParam.username, userParam.password))
     }
 
+    @PostMapping("/refreshToken")
+    fun refreshToken(refreshToken: String): R {
+        return R.judge(userDetailsService.refreshToken(refreshToken))
+    }
+
     @PostMapping("/edit")
     @PreAuthorize(HasAuthority.USER)
     fun edit(@Valid userInfo: UserInfoParam): R =

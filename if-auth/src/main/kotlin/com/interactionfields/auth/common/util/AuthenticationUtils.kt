@@ -4,6 +4,7 @@ import com.interactionfields.auth.common.userdetails.UserDetails
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationDetails
+import java.util.*
 
 /**
  * Top-level function for authentication.
@@ -21,3 +22,5 @@ val contextAuthDetails get() = contextAuth.details as OAuth2AuthenticationDetail
 val contextAuthPrincipal get() = contextAuth.principal as UserDetails
 
 val contextIsAuthenticated get() = contextAuth.isAuthenticated
+
+val clientAuthorization: String get() = Base64.getEncoder().encodeToString("client:276364092".toByteArray())
