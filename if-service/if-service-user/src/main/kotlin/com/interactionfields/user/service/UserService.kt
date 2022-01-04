@@ -30,17 +30,22 @@ class UserService(private val db: Database) {
      */
     @Transactional(rollbackFor = [Exception::class])
     fun signUp(user: User) {
+        // Check if the user exists
+        Assert.isNull(db.users.find { it.username eq user.username }, "The username already exists")
+
+        // Insert the user
         Assert.isTrue(db.users.add(user.apply {
             uuid = UUID.randomUUID().toString()
             password = password.encodeBCrypt()
             joinAt = LocalDateTime.now()
             signUpAt = joinAt
-        }) > 0, "failed to add a user")
+        }) > 0, "Failed to add a user")
 
+        // Assign roles
         Assert.isTrue(db.userRoles.add(UserRole().apply {
             userUUID = user.uuid
             role = Role().apply { id = RoleRepository.IDEnum.USER }
-        }) > 0, "failed to assign role")
+        }) > 0, "Failed to assign roles")
     }
 
     fun info(userInfo: UserInfoParam): UserVo {

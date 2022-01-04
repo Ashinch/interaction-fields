@@ -8,6 +8,7 @@ import com.interactionfields.common.response.R
 import com.interactionfields.user.model.param.ChangePwdParam
 import com.interactionfields.user.model.param.UserInfoParam
 import com.interactionfields.user.model.param.UserParam
+import com.interactionfields.user.model.param.UserSignUpParam
 import com.interactionfields.user.service.UserService
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
@@ -27,8 +28,10 @@ class UserController(
         R.judge(userDetailsService.login(userParam.username, userParam.password))
 
     @PostMapping("/signUp")
-    fun signUp(@Valid userParam: UserParam): R =
-        R.success(userService.signUp(User().copyFrom(userParam)))
+    fun signUp(@Valid userParam: UserSignUpParam): R {
+        userService.signUp(User().copyFrom(userParam))
+        return R.judge(userDetailsService.login(userParam.username, userParam.password))
+    }
 
     @PostMapping("/edit")
     @PreAuthorize(HasAuthority.USER)
