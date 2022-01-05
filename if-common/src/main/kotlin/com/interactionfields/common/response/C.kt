@@ -35,5 +35,5 @@ enum class C(
     USER_NOT_FOUND(2003, "用户不存在"),
     BAD_CREDENTIALS(2004, "用户名或密码错误"),
     ACCOUNT_LOCKED(2005, "账户已锁定"),
-    BAD_CLIENT_CREDENTIALS(2005, "服务凭证无效"), ;
+    BAD_CLIENT_CREDENTIALS(2005, "客户端凭证无效"), ;
 }

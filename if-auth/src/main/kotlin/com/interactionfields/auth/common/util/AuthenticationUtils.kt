@@ -15,6 +15,8 @@ import java.util.*
 
 val contextAuth: Authentication get() = SecurityContextHolder.getContext().authentication
 
+var contextAuthToken: String? = null
+
 val contextAuthId: Int get() = contextAuthPrincipal.getId()!!
 
 val contextAuthDetails get() = contextAuth.details as OAuth2AuthenticationDetails

@@ -39,26 +39,10 @@ class GlobalExceptionHandler {
     }
 
 //    /**
-//     * [InvalidGrantException] handler.
+//     * [AccessDeniedException] handler.
 //     */
-//    @ExceptionHandler(InvalidGrantException::class)
-//    fun handleInvalidGrantException(e: InvalidGrantException): R {
-//        return R.with(C.BAD_CREDENTIALS)
+//    @ExceptionHandler(AccessDeniedException::class)
+//    fun accessDeniedExceptionHandler(e: AccessDeniedException): R {
+//        return R.with(C.ACCESS_DENIED)
 //    }
-//
-//    /**
-//     * [InvalidGrantException] handler.
-//     */
-//    @ExceptionHandler(InternalAuthenticationServiceException::class)
-//    fun handleInvalidGrantException(e: InternalAuthenticationServiceException): R {
-//        return R.with(C.ACCOUNT_LOCKED)
-//    }
-
-    /**
-     * [AccessDeniedException] handler.
-     */
-    @ExceptionHandler(AccessDeniedException::class)
-    fun accessDeniedExceptionHandler(e: AccessDeniedException): R {
-        return R.with(C.ACCESS_DENIED)
-    }
 }

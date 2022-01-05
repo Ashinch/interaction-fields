@@ -2,6 +2,7 @@ package com.interactionfields.user.api
 
 import com.interactionfields.auth.common.userdetails.UserDetailsService
 import com.interactionfields.auth.common.util.HasAuthority
+import com.interactionfields.auth.common.util.contextAuthPrincipal
 import com.interactionfields.common.domain.User
 import com.interactionfields.common.extension.ObjectExt.copyFrom
 import com.interactionfields.common.response.R
@@ -34,9 +35,25 @@ class UserController(
     }
 
     @PostMapping("/refreshToken")
+    @PreAuthorize(HasAuthority.USER)
     fun refreshToken(refreshToken: String): R {
-        return R.judge(userDetailsService.refreshToken(refreshToken))
+        return R.judge(userDetailsService.refreshToken(contextAuthPrincipal.username!!, refreshToken))
     }
+
+    @PostMapping("/logOut")
+    @PreAuthorize(HasAuthority.USER)
+    fun logout(): R =
+        R.success(userDetailsService.logout(contextAuthPrincipal.username!!))
+
+    @PostMapping("/session")
+    @PreAuthorize(HasAuthority.USER)
+    fun session(): R =
+        R.judge(userDetailsService.session(contextAuthPrincipal.username!!))
+
+    @PostMapping("/offline")
+    @PreAuthorize(HasAuthority.USER)
+    fun offline(signature: String): R =
+        R.success(userDetailsService.offline(contextAuthPrincipal.username!!, signature))
 
     @PostMapping("/edit")
     @PreAuthorize(HasAuthority.USER)

@@ -2,6 +2,7 @@ package com.interactionfields.user.service
 
 import com.interactionfields.auth.common.util.BCryptPasswordEncoderExt.encodeBCrypt
 import com.interactionfields.auth.common.util.BCryptPasswordEncoderExt.matchesBCrypt
+import com.interactionfields.auth.common.util.JWTExt.getTokenSignature
 import com.interactionfields.auth.common.util.contextAuthPrincipal
 import com.interactionfields.common.domain.Role
 import com.interactionfields.common.domain.User
@@ -16,6 +17,7 @@ import org.ktorm.database.Database
 import org.ktorm.dsl.eq
 import org.ktorm.entity.add
 import org.ktorm.entity.find
+import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.util.Assert
@@ -23,7 +25,10 @@ import java.time.LocalDateTime
 import java.util.*
 
 @Service
-class UserService(private val db: Database) {
+class UserService(
+    private val db: Database,
+    private val redisTemplate: StringRedisTemplate
+) {
 
     /**
      * Create a [user] and assign roles.
@@ -61,6 +66,7 @@ class UserService(private val db: Database) {
         Assert.isTrue(old.matchesBCrypt(user.password), "The old password is incorrect")
         user.password = new.encodeBCrypt()
         user.flushChanges()
+        redisTemplate.delete("token.${user.username}")
         return true
     }
 }
